@@ -65,14 +65,14 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Analytics</h1>
+          <p className="text-gray-500">
             Business insights and performance metrics
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline">This Month</Button>
-          <Button variant="outline">Export Report</Button>
+          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">This Month</Button>
+          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">Export Report</Button>
         </div>
       </div>
 
@@ -85,7 +85,8 @@ export default function AnalyticsPage() {
             change: "+12.5%",
             trend: "up",
             icon: DollarSign,
-            gradient: "gradient-primary",
+            bg: "bg-violet-50",
+            iconColor: "text-violet-600",
           },
           {
             title: "Total Appointments",
@@ -93,7 +94,8 @@ export default function AnalyticsPage() {
             change: "+8.2%",
             trend: "up",
             icon: Calendar,
-            gradient: "gradient-cool",
+            bg: "bg-sky-50",
+            iconColor: "text-sky-600",
           },
           {
             title: "New Customers",
@@ -101,7 +103,8 @@ export default function AnalyticsPage() {
             change: "+15.3%",
             trend: "up",
             icon: Users,
-            gradient: "gradient-accent",
+            bg: "bg-emerald-50",
+            iconColor: "text-emerald-600",
           },
           {
             title: "Avg. Rating",
@@ -109,15 +112,16 @@ export default function AnalyticsPage() {
             change: "+0.12",
             trend: "up",
             icon: Star,
-            gradient: "gradient-warm",
+            bg: "bg-amber-50",
+            iconColor: "text-amber-600",
           },
         ].map((kpi) => (
-          <Card key={kpi.title}>
-            <CardContent className="p-6">
+          <Card key={kpi.title} className="border-gray-100 shadow-sm rounded-xl">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">{kpi.title}</p>
-                  <p className="text-3xl font-bold mt-1">{kpi.value}</p>
+                  <p className="text-[13px] text-gray-500">{kpi.title}</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">{kpi.value}</p>
                   <div className="flex items-center gap-1 mt-2">
                     {kpi.trend === "up" ? (
                       <ArrowUpRight className="h-4 w-4 text-emerald-500" />
@@ -125,21 +129,21 @@ export default function AnalyticsPage() {
                       <ArrowDownRight className="h-4 w-4 text-red-500" />
                     )}
                     <span
-                      className={`text-sm font-medium ${
+                      className={`text-[13px] font-medium ${
                         kpi.trend === "up" ? "text-emerald-500" : "text-red-500"
                       }`}
                     >
                       {kpi.change}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-[12px] text-gray-500">
                       vs last month
                     </span>
                   </div>
                 </div>
                 <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-xl ${kpi.gradient} shadow-lg`}
+                  className={`flex items-center justify-center w-12 h-12 rounded-xl ${kpi.bg}`}
                 >
-                  <kpi.icon className="h-6 w-6 text-white" />
+                  <kpi.icon className={`h-6 w-6 ${kpi.iconColor}`} />
                 </div>
               </div>
             </CardContent>
@@ -150,32 +154,32 @@ export default function AnalyticsPage() {
       {/* Charts row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue trend */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
+              <BarChart3 className="h-5 w-5 text-violet-600" />
               Revenue Trend
             </CardTitle>
-            <CardDescription>Monthly revenue for 2026</CardDescription>
+            <CardDescription className="text-[13px] text-gray-500">Monthly revenue for 2026</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {revenueData.map((data) => (
                 <div key={data.month} className="flex items-center gap-3">
-                  <span className="w-8 text-xs text-muted-foreground font-medium">
+                  <span className="w-8 text-[12px] text-gray-500 font-medium">
                     {data.month}
                   </span>
-                  <div className="flex-1 h-8 bg-muted rounded-lg overflow-hidden">
+                  <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
                     <div
-                      className="h-full gradient-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                      className="h-full bg-violet-500 rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
                       style={{ width: `${(data.revenue / 50000) * 100}%` }}
                     >
-                      <span className="text-[10px] font-bold text-white">
+                      <span className="text-[11px] font-bold text-white">
                         ${(data.revenue / 1000).toFixed(0)}k
                       </span>
                     </div>
                   </div>
-                  <span className="w-16 text-xs text-muted-foreground text-right">
+                  <span className="w-16 text-[12px] text-gray-500 text-right">
                     {data.appointments} appts
                   </span>
                 </div>
@@ -185,10 +189,10 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Service breakdown */}
-        <Card>
+        <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
-            <CardTitle>Service Breakdown</CardTitle>
-            <CardDescription>Revenue by service type</CardDescription>
+            <CardTitle className="text-[15px] font-semibold text-gray-900">Service Breakdown</CardTitle>
+            <CardDescription className="text-[13px] text-gray-500">Revenue by service type</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -233,8 +237,8 @@ export default function AnalyticsPage() {
                   ).elements}
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-2xl font-bold">$48.3k</p>
-                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold text-gray-900">$48.3k</p>
+                  <p className="text-[12px] text-gray-500">Total</p>
                 </div>
               </div>
 
@@ -244,8 +248,8 @@ export default function AnalyticsPage() {
                     <div
                       className={`w-3 h-3 rounded-full ${service.color}`}
                     />
-                    <span className="flex-1 text-sm">{service.name}</span>
-                    <span className="text-sm font-medium">
+                    <span className="flex-1 text-[13px] text-gray-900">{service.name}</span>
+                    <span className="text-[13px] font-medium text-gray-900">
                       {service.percentage}%
                     </span>
                   </div>
@@ -259,36 +263,36 @@ export default function AnalyticsPage() {
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Peak hours */}
-        <Card>
+        <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
+              <Clock className="h-5 w-5 text-violet-600" />
               Peak Hours
             </CardTitle>
-            <CardDescription>Average busyness by hour</CardDescription>
+            <CardDescription className="text-[13px] text-gray-500">Average busyness by hour</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {peakHours.map((hour) => (
                 <div key={hour.hour} className="flex items-center gap-3">
-                  <span className="w-12 text-xs text-muted-foreground">
+                  <span className="w-12 text-[12px] text-gray-500">
                     {hour.hour}
                   </span>
-                  <div className="flex-1 h-6 bg-muted rounded-lg overflow-hidden">
+                  <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden">
                     <div
                       className="h-full rounded-lg transition-all duration-500"
                       style={{
                         width: `${hour.percentage}%`,
                         background:
                           hour.percentage > 80
-                            ? "linear-gradient(90deg, #ec4899, #ef4444)"
+                            ? "#ec4899"
                             : hour.percentage > 60
-                            ? "linear-gradient(90deg, #8b5cf6, #ec4899)"
-                            : "linear-gradient(90deg, #06b6d4, #3b82f6)",
+                            ? "#8b5cf6"
+                            : "#0ea5e9",
                       }}
                     />
                   </div>
-                  <span className="w-8 text-xs font-medium text-right">
+                  <span className="w-8 text-[12px] font-medium text-gray-900 text-right">
                     {hour.percentage}%
                   </span>
                 </div>
@@ -298,37 +302,37 @@ export default function AnalyticsPage() {
         </Card>
 
         {/* Top stylists */}
-        <Card>
+        <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
+              <TrendingUp className="h-5 w-5 text-violet-600" />
               Top Stylists
             </CardTitle>
-            <CardDescription>Performance rankings this month</CardDescription>
+            <CardDescription className="text-[13px] text-gray-500">Performance rankings this month</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {topStylists.map((stylist, i) => (
                 <div
                   key={stylist.name}
-                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <div
                     className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-white ${
                       i === 0
-                        ? "bg-gradient-to-br from-amber-400 to-orange-500"
+                        ? "bg-amber-400"
                         : i === 1
-                        ? "bg-gradient-to-br from-gray-300 to-gray-400"
+                        ? "bg-gray-300"
                         : i === 2
-                        ? "bg-gradient-to-br from-amber-600 to-amber-700"
-                        : "bg-gradient-to-br from-violet-500 to-purple-600"
+                        ? "bg-amber-600"
+                        : "bg-violet-500"
                     }`}
                   >
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium">{stylist.name}</p>
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <p className="font-medium text-gray-900">{stylist.name}</p>
+                    <div className="flex items-center gap-3 text-[13px] text-gray-500">
                       <span>{stylist.appointments} appointments</span>
                       <span className="flex items-center gap-1">
                         <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
@@ -336,7 +340,7 @@ export default function AnalyticsPage() {
                       </span>
                     </div>
                   </div>
-                  <p className="text-lg font-bold">{stylist.revenue}</p>
+                  <p className="text-lg font-bold text-gray-900">{stylist.revenue}</p>
                 </div>
               ))}
             </div>

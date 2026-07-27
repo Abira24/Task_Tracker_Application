@@ -15,7 +15,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -27,89 +26,46 @@ const stats = [
     title: "Total Revenue",
     value: "$48,295",
     change: "+12.5%",
-    trend: "up",
+    trend: "up" as const,
     icon: DollarSign,
-    gradient: "gradient-primary",
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
   },
   {
     title: "Appointments",
     value: "128",
     change: "+8.2%",
-    trend: "up",
+    trend: "up" as const,
     icon: Calendar,
-    gradient: "gradient-cool",
+    color: "text-blue-600",
+    bg: "bg-blue-50",
   },
   {
     title: "Active Customers",
     value: "856",
     change: "+15.3%",
-    trend: "up",
+    trend: "up" as const,
     icon: Users,
-    gradient: "gradient-accent",
+    color: "text-violet-600",
+    bg: "bg-violet-50",
   },
   {
     title: "Avg. Rating",
     value: "4.9",
     change: "+0.3",
-    trend: "up",
+    trend: "up" as const,
     icon: Star,
-    gradient: "gradient-warm",
+    color: "text-amber-600",
+    bg: "bg-amber-50",
   },
 ];
 
 const todayAppointments = [
-  {
-    id: 1,
-    client: "Sarah Johnson",
-    service: "Hair Coloring",
-    time: "9:00 AM",
-    stylist: "Emma Wilson",
-    status: "confirmed",
-    duration: "2h 30m",
-  },
-  {
-    id: 2,
-    client: "Mike Chen",
-    service: "Beard Trim & Shave",
-    time: "10:30 AM",
-    stylist: "James Brown",
-    status: "in-progress",
-    duration: "45m",
-  },
-  {
-    id: 3,
-    client: "Lisa Anderson",
-    service: "Full Makeover",
-    time: "11:00 AM",
-    stylist: "Sophia Lee",
-    status: "confirmed",
-    duration: "3h",
-  },
-  {
-    id: 4,
-    client: "Tom Williams",
-    service: "Haircut",
-    time: "1:00 PM",
-    stylist: "Emma Wilson",
-    status: "pending",
-    duration: "30m",
-  },
-  {
-    id: 5,
-    client: "Anna Martinez",
-    service: "Manicure & Pedicure",
-    time: "2:30 PM",
-    stylist: "Mia Garcia",
-    status: "confirmed",
-    duration: "1h 15m",
-  },
-];
-
-const recentCustomers = [
-  { name: "Emily Davis", visits: 12, spent: "$1,240", lastVisit: "2 days ago" },
-  { name: "Robert Kim", visits: 8, spent: "$890", lastVisit: "1 week ago" },
-  { name: "Maria Santos", visits: 15, spent: "$2,100", lastVisit: "3 days ago" },
-  { name: "David Lee", visits: 5, spent: "$450", lastVisit: "Today" },
+  { id: 1, client: "Sarah Johnson", service: "Hair Coloring", time: "9:00 AM", stylist: "Emma Wilson", status: "confirmed", duration: "2h 30m" },
+  { id: 2, client: "Mike Chen", service: "Beard Trim", time: "10:30 AM", stylist: "James Brown", status: "in-progress", duration: "45m" },
+  { id: 3, client: "Lisa Anderson", service: "Full Makeover", time: "11:00 AM", stylist: "Sophia Lee", status: "confirmed", duration: "3h" },
+  { id: 4, client: "Tom Williams", service: "Haircut", time: "1:00 PM", stylist: "Emma Wilson", status: "pending", duration: "30m" },
+  { id: 5, client: "Anna Martinez", service: "Manicure", time: "2:30 PM", stylist: "Mia Garcia", status: "confirmed", duration: "1h 15m" },
 ];
 
 const topServices = [
@@ -119,67 +75,54 @@ const topServices = [
   { name: "Manicure & Pedicure", bookings: 30, revenue: "$2,700", icon: "💅" },
 ];
 
+const recentCustomers = [
+  { name: "Emily Davis", visits: 12, spent: "$1,240", lastVisit: "2 days ago" },
+  { name: "Robert Kim", visits: 8, spent: "$890", lastVisit: "1 week ago" },
+  { name: "Maria Santos", visits: 15, spent: "$2,100", lastVisit: "3 days ago" },
+  { name: "David Lee", visits: 5, spent: "$450", lastVisit: "Today" },
+];
+
 const statusColors: Record<string, string> = {
-  confirmed: "bg-emerald-100 text-emerald-800",
-  "in-progress": "bg-sky-100 text-sky-800",
-  pending: "bg-amber-100 text-amber-800",
-  completed: "bg-violet-100 text-violet-800",
+  confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "in-progress": "bg-blue-50 text-blue-700 border-blue-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
 };
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6">
-      {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight text-gray-900">
             Good Morning, Jane
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-gray-500 mt-0.5">
             Here&apos;s what&apos;s happening at your salon today
           </p>
         </div>
-        <Button className="gradient-primary hidden sm:flex">
+        <Button className="bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 rounded-xl font-semibold text-sm px-4 h-10 hidden sm:flex">
           <Calendar className="h-4 w-4" />
           New Appointment
         </Button>
       </div>
 
-      {/* Stats grid */}
+      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="overflow-hidden">
-            <CardContent className="p-6">
+          <Card key={stat.title} className="border-gray-100 shadow-sm">
+            <CardContent className="p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.title}
-                  </p>
-                  <p className="text-3xl font-bold mt-1">{stat.value}</p>
+                  <p className="text-[13px] font-medium text-gray-500">{stat.title}</p>
+                  <p className="text-2xl font-bold mt-1 text-gray-900">{stat.value}</p>
                   <div className="flex items-center gap-1 mt-2">
-                    {stat.trend === "up" ? (
-                      <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-500" />
-                    )}
-                    <span
-                      className={`text-sm font-medium ${
-                        stat.trend === "up"
-                          ? "text-emerald-500"
-                          : "text-red-500"
-                      }`}
-                    >
-                      {stat.change}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      vs last month
-                    </span>
+                    <ArrowUpRight className="h-3.5 w-3.5 text-emerald-500" />
+                    <span className="text-[12px] font-semibold text-emerald-600">{stat.change}</span>
+                    <span className="text-[11px] text-gray-400">vs last month</span>
                   </div>
                 </div>
-                <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-xl ${stat.gradient} shadow-lg`}
-                >
-                  <stat.icon className="h-6 w-6 text-white" />
+                <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.bg}`}>
+                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
                 </div>
               </div>
             </CardContent>
@@ -187,47 +130,41 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Main content grid */}
+      {/* Main content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Today's appointments */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Today&apos;s Appointments
-              </CardTitle>
-              <CardDescription>5 appointments scheduled</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm">
+        {/* Appointments */}
+        <Card className="lg:col-span-2 border-gray-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-[15px] font-bold text-gray-900">
+              Today&apos;s Appointments
+            </CardTitle>
+            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 text-[13px] font-medium">
               View All <ChevronRight className="h-4 w-4" />
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
+          <CardContent className="pt-0">
+            <div className="space-y-1">
               {todayAppointments.map((apt) => (
                 <div
                   key={apt.id}
-                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors group"
+                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary/10 text-primary font-bold text-sm">
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-semibold text-xs">
                     {apt.time.split(" ")[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{apt.client}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-semibold text-[13px] text-gray-900 truncate">{apt.client}</p>
+                    <p className="text-[12px] text-gray-500">
                       {apt.service} · {apt.stylist}
                     </p>
                   </div>
                   <div className="text-right hidden sm:block">
-                    <p className="text-sm font-medium">{apt.duration}</p>
-                    <Badge
-                      className={`text-[10px] ${statusColors[apt.status]}`}
-                    >
+                    <p className="text-[12px] font-medium text-gray-600">{apt.duration}</p>
+                    <Badge className={`text-[10px] font-medium border ${statusColors[apt.status]}`}>
                       {apt.status}
                     </Badge>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="h-4 w-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               ))}
             </div>
@@ -235,27 +172,20 @@ export default function DashboardPage() {
         </Card>
 
         {/* Top services */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Top Services</CardTitle>
-              <CardDescription>This month</CardDescription>
-            </div>
+        <Card className="border-gray-100 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[15px] font-bold text-gray-900">Top Services</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topServices.map((service, i) => (
-                <div key={service.name} className="flex items-center gap-3">
-                  <span className="text-2xl">{service.icon}</span>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              {topServices.map((service) => (
+                <div key={service.name} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                  <span className="text-xl">{service.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">
-                      {service.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {service.bookings} bookings
-                    </p>
+                    <p className="font-semibold text-[13px] text-gray-900 truncate">{service.name}</p>
+                    <p className="text-[11px] text-gray-500">{service.bookings} bookings</p>
                   </div>
-                  <p className="font-semibold text-sm">{service.revenue}</p>
+                  <p className="font-bold text-[13px] text-gray-900">{service.revenue}</p>
                 </div>
               ))}
             </div>
@@ -266,82 +196,57 @@ export default function DashboardPage() {
       {/* Bottom row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent customers */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Recent Customers</CardTitle>
-              <CardDescription>Top spending customers</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm">
+        <Card className="border-gray-100 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-[15px] font-bold text-gray-900">Recent Customers</CardTitle>
+            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 text-[13px] font-medium">
               View All <ChevronRight className="h-4 w-4" />
             </Button>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {recentCustomers.map((customer, i) => (
+          <CardContent className="pt-0">
+            <div className="space-y-1">
+              {recentCustomers.map((customer) => (
                 <div
                   key={customer.name}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 text-white font-bold text-sm">
-                    {customer.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-[11px]">
+                    {customer.name.split(" ").map((n) => n[0]).join("")}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{customer.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {customer.visits} visits · Last: {customer.lastVisit}
+                    <p className="font-semibold text-[13px] text-gray-900">{customer.name}</p>
+                    <p className="text-[11px] text-gray-500">
+                      {customer.visits} visits · {customer.lastVisit}
                     </p>
                   </div>
-                  <p className="font-semibold text-sm">{customer.spent}</p>
+                  <p className="font-bold text-[13px] text-gray-900">{customer.spent}</p>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* Quick actions & performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Frequently used actions</CardDescription>
+        {/* Quick actions */}
+        <Card className="border-gray-100 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-[15px] font-bold text-gray-900">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-0">
             <div className="grid grid-cols-2 gap-3">
               {[
-                {
-                  icon: Calendar,
-                  label: "Book Appointment",
-                  color: "bg-violet-100 text-violet-700",
-                },
-                {
-                  icon: Users,
-                  label: "Add Customer",
-                  color: "bg-sky-100 text-sky-700",
-                },
-                {
-                  icon: Scissors,
-                  label: "Add Service",
-                  color: "bg-pink-100 text-pink-700",
-                },
-                {
-                  icon: TrendingUp,
-                  label: "View Reports",
-                  color: "bg-emerald-100 text-emerald-700",
-                },
+                { icon: Calendar, label: "Book Appointment", color: "bg-violet-50 text-violet-600" },
+                { icon: Users, label: "Add Customer", color: "bg-blue-50 text-blue-600" },
+                { icon: Scissors, label: "Add Service", color: "bg-pink-50 text-pink-600" },
+                { icon: TrendingUp, label: "View Reports", color: "bg-emerald-50 text-emerald-600" },
               ].map((action) => (
                 <button
                   key={action.label}
-                  className="flex flex-col items-center gap-2 p-4 rounded-xl border hover:bg-muted/50 transition-all hover:scale-[1.02] cursor-pointer"
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
                 >
-                  <div
-                    className={`flex items-center justify-center w-12 h-12 rounded-xl ${action.color}`}
-                  >
-                    <action.icon className="h-6 w-6" />
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${action.color}`}>
+                    <action.icon className="h-5 w-5" />
                   </div>
-                  <span className="text-sm font-medium">{action.label}</span>
+                  <span className="text-[12px] font-semibold text-gray-700">{action.label}</span>
                 </button>
               ))}
             </div>

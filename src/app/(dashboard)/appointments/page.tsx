@@ -124,11 +124,11 @@ const appointments = [
 ];
 
 const statusStyles: Record<string, string> = {
-  confirmed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  "in-progress": "bg-sky-100 text-sky-800 border-sky-200",
-  pending: "bg-amber-100 text-amber-800 border-amber-200",
-  completed: "bg-violet-100 text-violet-800 border-violet-200",
-  cancelled: "bg-red-100 text-red-800 border-red-200",
+  confirmed: "bg-emerald-50 text-emerald-700 border-emerald-100",
+  "in-progress": "bg-sky-50 text-sky-700 border-sky-100",
+  pending: "bg-amber-50 text-amber-700 border-amber-100",
+  completed: "bg-violet-50 text-violet-700 border-violet-100",
+  cancelled: "bg-red-50 text-red-700 border-red-100",
 };
 
 export default function AppointmentsPage() {
@@ -147,35 +147,35 @@ export default function AppointmentsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Appointments</h1>
+          <p className="text-gray-500">
             Manage your salon appointments and schedule
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-muted rounded-lg p-1">
+          <div className="flex items-center bg-gray-100 rounded-xl p-1">
             <button
               onClick={() => setView("calendar")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors cursor-pointer ${
                 view === "calendar"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               Calendar
             </button>
             <button
               onClick={() => setView("list")}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors cursor-pointer ${
                 view === "list"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-white shadow-sm text-gray-900"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               List
             </button>
           </div>
-          <Button className="gradient-primary">
+          <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
             <Plus className="h-4 w-4" />
             New Booking
           </Button>
@@ -184,7 +184,7 @@ export default function AppointmentsPage() {
 
       {/* Date navigation */}
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="rounded-xl border-gray-200">
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <div className="flex items-center gap-2 flex-1 overflow-x-auto pb-2">
@@ -193,11 +193,11 @@ export default function AppointmentsPage() {
               key={i}
               className={`flex flex-col items-center min-w-[60px] px-3 py-2 rounded-xl transition-all cursor-pointer ${
                 day.toDateString() === today.toDateString()
-                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25"
-                  : "hover:bg-muted"
+                  ? "bg-violet-600 text-white shadow-sm"
+                  : "hover:bg-gray-50 text-gray-700"
               }`}
             >
-              <span className="text-[10px] uppercase font-medium opacity-70">
+              <span className="text-[11px] uppercase font-medium opacity-70">
                 {day.toLocaleDateString("en-US", { weekday: "short" })}
               </span>
               <span className="text-lg font-bold">{day.getDate()}</span>
@@ -207,7 +207,7 @@ export default function AppointmentsPage() {
             </button>
           ))}
         </div>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="rounded-xl border-gray-200">
           <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
@@ -220,7 +220,7 @@ export default function AppointmentsPage() {
             {timeSlots.map((time) => (
               <div
                 key={time}
-                className="h-16 flex items-start text-xs text-muted-foreground font-medium pt-0"
+                className="h-16 flex items-start text-[12px] text-gray-500 font-medium pt-0"
               >
                 {time}
               </div>
@@ -231,17 +231,17 @@ export default function AppointmentsPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {stylists.map((stylist) => (
               <div key={stylist.id} className="space-y-2">
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
                   <div
                     className={`w-3 h-3 rounded-full ${stylist.color}`}
                   />
-                  <span className="font-medium text-sm">{stylist.name}</span>
+                  <span className="font-medium text-[13px] text-gray-900">{stylist.name}</span>
                 </div>
                 <div className="space-y-1 relative min-h-[400px]">
                   {timeSlots.map((time) => (
                     <div
                       key={time}
-                      className="h-16 border-b border-dashed border-border/50"
+                      className="h-16 border-b border-dashed border-gray-100"
                     />
                   ))}
                   {/* Appointment blocks */}
@@ -257,19 +257,19 @@ export default function AppointmentsPage() {
                       return (
                         <div
                           key={apt.id}
-                          className={`absolute left-1 right-1 rounded-lg p-2 border-l-4 ${apt.color} bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden`}
+                          className={`absolute left-1 right-1 rounded-lg p-2 border-l-4 ${apt.color} bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden`}
                           style={{
                             top: `${startIdx * 64}px`,
                             height: `${Math.max(duration * 64 - 4, 30)}px`,
                           }}
                         >
-                          <p className="text-xs font-semibold truncate">
+                          <p className="text-[12px] font-semibold text-gray-900 truncate">
                             {apt.client}
                           </p>
-                          <p className="text-[10px] text-muted-foreground truncate">
+                          <p className="text-[11px] text-gray-500 truncate">
                             {apt.service}
                           </p>
-                          <p className="text-[10px] text-muted-foreground mt-1">
+                          <p className="text-[11px] text-gray-500 mt-1">
                             {apt.time}
                           </p>
                         </div>
@@ -284,8 +284,8 @@ export default function AppointmentsPage() {
         /* List view */
         <div className="space-y-3">
           {appointments.map((apt) => (
-            <Card key={apt.id}>
-              <CardContent className="p-4">
+            <Card key={apt.id} className="border-gray-100 shadow-sm rounded-xl">
+              <CardContent className="p-5">
                 <div className="flex items-center gap-4">
                   <div
                     className={`flex items-center justify-center w-14 h-14 rounded-xl ${apt.color} text-white font-bold text-sm shrink-0`}
@@ -301,12 +301,12 @@ export default function AppointmentsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{apt.client}</h3>
-                      <Badge className={`text-[10px] ${statusStyles[apt.status]}`}>
+                      <h3 className="font-semibold text-gray-900">{apt.client}</h3>
+                      <Badge className={`text-[11px] ${statusStyles[apt.status]}`}>
                         {apt.status}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-3 mt-1 text-[13px] text-gray-500">
                       <span className="flex items-center gap-1">
                         <Scissors className="h-3 w-3" /> {apt.service}
                       </span>
@@ -318,7 +318,7 @@ export default function AppointmentsPage() {
                       </span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Button variant="outline" size="sm" className="hidden sm:flex rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
                     View Details
                   </Button>
                 </div>

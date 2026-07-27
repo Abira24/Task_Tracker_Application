@@ -27,54 +27,51 @@ function LoginForm() {
   return (
     <>
       {/* Demo buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 mb-5">
         <button
           type="button"
           onClick={() => fillDemo("admin")}
-          className="flex-1 px-3 py-2 rounded-lg border border-dashed hover:bg-muted/50 transition-colors text-sm cursor-pointer"
+          className="flex-1 px-3 py-2 rounded-xl border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-sm cursor-pointer"
         >
-          <span className="text-muted-foreground text-xs">Demo: Admin</span>
+          <span className="text-gray-400 text-xs font-medium">Demo: Admin</span>
         </button>
         <button
           type="button"
           onClick={() => fillDemo("stylist")}
-          className="flex-1 px-3 py-2 rounded-lg border border-dashed hover:bg-muted/50 transition-colors text-sm cursor-pointer"
+          className="flex-1 px-3 py-2 rounded-xl border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-sm cursor-pointer"
         >
-          <span className="text-muted-foreground text-xs">Demo: Stylist</span>
+          <span className="text-gray-400 text-xs font-medium">Demo: Stylist</span>
         </button>
       </div>
 
-      <form action={action} className="space-y-4">
+      <form action={action} className="space-y-5">
         {state?.message && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
             {state.message}
           </div>
         )}
 
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium leading-none">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-normal text-gray-500">
             Email
           </label>
           <input
             id="email"
             name="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder="name@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all"
+            className="w-full bg-white border-[1.5px] border-gray-200 rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-gray-50/50 placeholder:text-gray-400"
           />
           {state?.errors?.email && (
-            <p className="text-sm text-red-500">{state.errors.email[0]}</p>
+            <p className="text-xs text-red-500 mt-0.5">{state.errors.email[0]}</p>
           )}
         </div>
 
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="text-sm font-medium leading-none"
-          >
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-normal text-gray-500">
             Password
           </label>
           <div className="relative">
@@ -82,16 +79,16 @@ function LoginForm() {
               id="password"
               name="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-2 pr-10 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 transition-all"
+              className="w-full bg-white border-[1.5px] border-gray-200 rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-gray-50/50 placeholder:text-gray-400 pr-10"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
             >
               {showPassword ? (
                 <EyeOff className="h-4 w-4" />
@@ -101,111 +98,79 @@ function LoginForm() {
             </button>
           </div>
           {state?.errors?.password && (
-            <p className="text-sm text-red-500">{state.errors.password[0]}</p>
+            <p className="text-xs text-red-500 mt-0.5">{state.errors.password[0]}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={pending}
-          className="flex items-center justify-center gap-2 w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full mt-4 py-3 text-base font-bold tracking-wide rounded-xl bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {pending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-5 w-5 animate-spin mx-auto" />
           ) : (
-            <>
+            <span className="inline-flex items-center gap-2">
               Sign In
               <ArrowRight className="h-4 w-4" />
-            </>
+            </span>
           )}
         </button>
       </form>
-
-      <p className="text-center text-xs text-muted-foreground">
-        Click a demo button above to pre-fill credentials
-      </p>
     </>
   );
 }
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex">
-      {/* Left panel - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div className="absolute inset-0 gradient-primary" />
-        <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMSIgZmlsbD0id2hpdGUiLz48L3N2Zz4=')]" />
-        <div className="relative z-10 flex flex-col items-center justify-center w-full p-12 text-white">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20">
-              <Sparkles className="h-7 w-7" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Glamour</h1>
-              <p className="text-xs text-white/60 uppercase tracking-[0.2em]">
-                Salon Suite
-              </p>
-            </div>
-          </div>
-
-          <div className="max-w-sm text-center space-y-6">
-            <h2 className="text-4xl font-bold leading-tight">
-              Manage your salon
-              <br />
-              with elegance
-            </h2>
-            <p className="text-white/70 text-lg">
-              Appointments, tasks, customers, and analytics — all in one place.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-3 gap-8 mt-16 max-w-sm w-full">
-            {[
-              { value: "2.4k+", label: "Appointments" },
-              { value: "856", label: "Customers" },
-              { value: "$48k", label: "Revenue" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-2xl font-bold">{stat.value}</p>
-                <p className="text-xs text-white/50 mt-1">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen relative flex flex-col items-center justify-center bg-[#f8fafc] py-12">
+      {/* Decorative gradient blobs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-purple-400/20 to-purple-600/20 blur-[100px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tl from-violet-600/20 to-blue-500/20 blur-[100px]" />
       </div>
 
-      {/* Right panel - Login form */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-sm space-y-8">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl gradient-accent">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-bold text-lg">Glamour</h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
-                Salon Suite
+      {/* Logo & brand */}
+      <div className="relative z-10 flex flex-col items-center mb-8 gap-4">
+        <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600">
+            <Sparkles className="h-5 w-5 text-white" />
+          </div>
+        </div>
+        <span className="text-2xl font-black text-[#2D3142] tracking-tight">
+          Glamour Salon
+        </span>
+      </div>
+
+      {/* Login card */}
+      <div className="relative z-10 w-full flex justify-center">
+        <div className="w-full max-w-md px-4">
+          <div
+            className="flex flex-col relative overflow-hidden border-none w-full p-8 rounded-[24px] bg-white/80 backdrop-blur-xl border border-white/60 ring-1 ring-gray-900/5"
+            style={{
+              boxShadow:
+                "0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            <div className="text-center mb-8">
+              <h1 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
+                Welcome Back
+              </h1>
+              <p className="text-sm font-medium text-gray-500">
+                Please sign in to your account
               </p>
             </div>
-          </div>
 
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-            <p className="text-muted-foreground mt-2">
-              Sign in to your account to continue
-            </p>
+            <Suspense
+              fallback={
+                <div className="flex items-center justify-center h-48">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              }
+            >
+              <LoginForm />
+            </Suspense>
           </div>
-
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center h-48">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            }
-          >
-            <LoginForm />
-          </Suspense>
         </div>
       </div>
     </div>
