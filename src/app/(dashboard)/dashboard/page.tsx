@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Calendar,
@@ -12,6 +13,7 @@ import {
   Scissors,
   Star,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import {
   Card,
@@ -21,6 +23,16 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const statusColors: Record<string, string> = {
   confirmed: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -29,11 +41,25 @@ const statusColors: Record<string, string> = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
+  const [showCustomerDialog, setShowCustomerDialog] = useState(false);
+  const [showServiceDialog, setShowServiceDialog] = useState(false);
+
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [stylists, setStylists] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+
+  const [apptForm, setApptForm] = useState({ customerId: "", serviceId: "", stylistId: "", date: new Date().toISOString().split("T")[0], startTime: "09:00", endTime: "10:00" });
+  const [custForm, setCustForm] = useState({ name: "", email: "", phone: "" });
+  const [svcForm, setSvcForm] = useState({ name: "", category: "Cut", duration: "30", price: "" });
+
+  const loadData = () => {
     Promise.all([
       fetch("/api/stats").then((r) => r.json()),
       fetch("/api/auth/me").then((r) => r.json()),
@@ -44,7 +70,104 @@ export default function DashboardPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(loadData, []);
+
+  const openAppointmentDialog = async () => {
+    const [c, st, sv] = await Promise.all([
+      fetch("/api/customers").then((r) => r.json()),
+      fetch("/api/stylists").then((r) => r.json()),
+      fetch("/api/services").then((r) => r.json()),
+    ]);
+    setCustomers(c.customers || []);
+    setStylists(st.stylists || []);
+    setServices(sv.services || []);
+    setShowAppointmentDialog(true);
+  };
+
+  const openCustomerDialog = () => {
+    setCustForm({ name: "", email: "", phone: "" });
+    setShowCustomerDialog(true);
+  };
+
+  const openServiceDialog = () => {
+    setSvcForm({ name: "", category: "Cut", duration: "30", price: "" });
+    setShowServiceDialog(true);
+  };
+
+  const createAppointment = async () => {
+    setFormSubmitting(true);
+    try {
+      const start = apptForm.startTime;
+      const startHour = parseInt(start.split(":")[0]);
+      const startMin = start.split(":")[1];
+      const start12 = `${startHour > 12 ? startHour - 12 : startHour}:${startMin} ${startHour >= 12 ? "PM" : "AM"}`;
+
+      const endHour = parseInt(apptForm.endTime.split(":")[0]);
+      const endMin = apptForm.endTime.split(":")[1];
+      const end12 = `${endHour > 12 ? endHour - 12 : endHour}:${endMin} ${endHour >= 12 ? "PM" : "AM"}`;
+
+      await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: apptForm.date,
+          startTime: start12,
+          endTime: end12,
+          customerId: apptForm.customerId,
+          serviceId: apptForm.serviceId,
+          stylistId: apptForm.stylistId,
+        }),
+      });
+      setShowAppointmentDialog(false);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const createCustomer = async () => {
+    setFormSubmitting(true);
+    try {
+      await fetch("/api/customers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(custForm),
+      });
+      setShowCustomerDialog(false);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
+
+  const createService = async () => {
+    setFormSubmitting(true);
+    try {
+      const durationTotal = svcForm.duration.includes("h") ? parseInt(svcForm.duration) * 60 : parseInt(svcForm.duration);
+      await fetch("/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: svcForm.name,
+          category: svcForm.category,
+          duration: durationTotal,
+          price: parseFloat(svcForm.price),
+        }),
+      });
+      setShowServiceDialog(false);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -77,7 +200,10 @@ export default function DashboardPage() {
             Here&apos;s what&apos;s happening at your salon today
           </p>
         </div>
-        <Button className="bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 rounded-xl font-semibold text-sm px-4 h-10 hidden sm:flex">
+        <Button
+          onClick={openAppointmentDialog}
+          className="bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 rounded-xl font-semibold text-sm px-4 h-10 hidden sm:flex cursor-pointer"
+        >
           <Calendar className="h-4 w-4" />
           New Appointment
         </Button>
@@ -119,7 +245,12 @@ export default function DashboardPage() {
             <CardTitle className="text-[15px] font-bold text-gray-900">
               Today&apos;s Appointments
             </CardTitle>
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 text-[13px] font-medium">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/appointments")}
+              className="text-gray-500 hover:text-gray-700 text-[13px] font-medium cursor-pointer"
+            >
               View All <ChevronRight className="h-4 w-4" />
             </Button>
           </CardHeader>
@@ -128,6 +259,7 @@ export default function DashboardPage() {
               {todayAppointments.map((apt: any) => (
                 <div
                   key={apt.id}
+                  onClick={() => router.push("/appointments")}
                   className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group cursor-pointer"
                 >
                   <div className="flex items-center justify-center w-11 h-11 rounded-xl bg-gray-100 text-gray-700 font-semibold text-xs">
@@ -183,7 +315,12 @@ export default function DashboardPage() {
         <Card className="border-gray-100 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-[15px] font-bold text-gray-900">Recent Customers</CardTitle>
-            <Button variant="ghost" size="sm" className="text-gray-500 hover:text-gray-700 text-[13px] font-medium">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push("/customers")}
+              className="text-gray-500 hover:text-gray-700 text-[13px] font-medium cursor-pointer"
+            >
               View All <ChevronRight className="h-4 w-4" />
             </Button>
           </CardHeader>
@@ -219,26 +356,244 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-2 gap-3">
-              {[
-                { icon: Calendar, label: "Book Appointment", color: "bg-violet-50 text-violet-600" },
-                { icon: Users, label: "Add Customer", color: "bg-blue-50 text-blue-600" },
-                { icon: Scissors, label: "Add Service", color: "bg-pink-50 text-pink-600" },
-                { icon: TrendingUp, label: "View Reports", color: "bg-emerald-50 text-emerald-600" },
-              ].map((action) => (
-                <button
-                  key={action.label}
-                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
-                >
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${action.color}`}>
-                    <action.icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-[12px] font-semibold text-gray-700">{action.label}</span>
-                </button>
-              ))}
+              <button
+                onClick={openAppointmentDialog}
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-50 text-violet-600">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <span className="text-[12px] font-semibold text-gray-700">Book Appointment</span>
+              </button>
+              <button
+                onClick={openCustomerDialog}
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600">
+                  <Users className="h-5 w-5" />
+                </div>
+                <span className="text-[12px] font-semibold text-gray-700">Add Customer</span>
+              </button>
+              <button
+                onClick={openServiceDialog}
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-pink-50 text-pink-600">
+                  <Scissors className="h-5 w-5" />
+                </div>
+                <span className="text-[12px] font-semibold text-gray-700">Add Service</span>
+              </button>
+              <button
+                onClick={() => router.push("/analytics")}
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600">
+                  <TrendingUp className="h-5 w-5" />
+                </div>
+                <span className="text-[12px] font-semibold text-gray-700">View Reports</span>
+              </button>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* New Appointment Dialog */}
+      <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Appointment</DialogTitle>
+            <DialogDescription>Book a new appointment for a customer.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Customer</Label>
+              <select
+                value={apptForm.customerId}
+                onChange={(e) => setApptForm({ ...apptForm, customerId: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                <option value="">Select customer...</option>
+                {customers.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Service</Label>
+              <select
+                value={apptForm.serviceId}
+                onChange={(e) => setApptForm({ ...apptForm, serviceId: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                <option value="">Select service...</option>
+                {services.map((s: any) => (
+                  <option key={s.id} value={s.id}>{s.name} - {s.price}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Stylist</Label>
+              <select
+                value={apptForm.stylistId}
+                onChange={(e) => setApptForm({ ...apptForm, stylistId: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                <option value="">Select stylist...</option>
+                {stylists.map((st: any) => (
+                  <option key={st.id} value={st.id}>{st.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Date</Label>
+              <Input
+                type="date"
+                value={apptForm.date}
+                onChange={(e) => setApptForm({ ...apptForm, date: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Start Time</Label>
+                <Input
+                  type="time"
+                  value={apptForm.startTime}
+                  onChange={(e) => setApptForm({ ...apptForm, startTime: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Time</Label>
+                <Input
+                  type="time"
+                  value={apptForm.endTime}
+                  onChange={(e) => setApptForm({ ...apptForm, endTime: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowAppointmentDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button
+              onClick={createAppointment}
+              disabled={formSubmitting || !apptForm.customerId || !apptForm.serviceId || !apptForm.stylistId}
+              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+            >
+              {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Book Appointment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Customer Dialog */}
+      <Dialog open={showCustomerDialog} onOpenChange={setShowCustomerDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add Customer</DialogTitle>
+            <DialogDescription>Add a new customer to your database.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input
+                value={custForm.name}
+                onChange={(e) => setCustForm({ ...custForm, name: e.target.value })}
+                placeholder="Customer name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={custForm.email}
+                onChange={(e) => setCustForm({ ...custForm, email: e.target.value })}
+                placeholder="customer@example.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={custForm.phone}
+                onChange={(e) => setCustForm({ ...custForm, phone: e.target.value })}
+                placeholder="+1 (555) 000-0000"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCustomerDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button
+              onClick={createCustomer}
+              disabled={formSubmitting || !custForm.name || !custForm.email}
+              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+            >
+              {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Add Customer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Service Dialog */}
+      <Dialog open={showServiceDialog} onOpenChange={setShowServiceDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Add Service</DialogTitle>
+            <DialogDescription>Add a new service to your menu.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Service Name</Label>
+              <Input
+                value={svcForm.name}
+                onChange={(e) => setSvcForm({ ...svcForm, name: e.target.value })}
+                placeholder="e.g. Hair Treatment"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <select
+                value={svcForm.category}
+                onChange={(e) => setSvcForm({ ...svcForm, category: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                {["Cut", "Color", "Beauty", "Nails", "Treatment", "Grooming", "Special"].map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Duration (minutes)</Label>
+              <Input
+                type="number"
+                value={svcForm.duration}
+                onChange={(e) => setSvcForm({ ...svcForm, duration: e.target.value })}
+                placeholder="30"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Price ($)</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={svcForm.price}
+                onChange={(e) => setSvcForm({ ...svcForm, price: e.target.value })}
+                placeholder="49.99"
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowServiceDialog(false)} className="rounded-xl">Cancel</Button>
+            <Button
+              onClick={createService}
+              disabled={formSubmitting || !svcForm.name || !svcForm.price}
+              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+            >
+              {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Add Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
