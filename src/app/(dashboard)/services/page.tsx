@@ -11,17 +11,24 @@ import {
   Star,
   Scissors,
   Eye,
-  MoreHorizontal,
+  Loader2,
 } from "lucide-react";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const serviceIcons: Record<string, string> = {
   "Hair Coloring": "🎨",
@@ -52,7 +59,16 @@ export default function ServicesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedService, setSelectedService] = useState<any>(null);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+
+  const emptyForm = { name: "", description: "", duration: 60, price: 0, category: "Cut" };
+  const [createForm, setCreateForm] = useState(emptyForm);
+  const [editForm, setEditForm] = useState(emptyForm);
+
+  const loadServices = () => {
     fetch("/api/services")
       .then((r) => r.json())
       .then((data) => {
@@ -62,13 +78,64 @@ export default function ServicesPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(loadServices, []);
 
   const filtered = services.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "All" || s.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const createService = async () => {
+    setFormSubmitting(true);
+    try {
+      await fetch("/api/services", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...createForm, price: Number(createForm.price), duration: Number(createForm.duration) }),
+      });
+      setShowCreateDialog(false);
+      loadServices();
+    } catch (e) { console.error(e) }
+    finally { setFormSubmitting(false) }
+  };
+
+  const updateService = async () => {
+    if (!selectedService) return;
+    setFormSubmitting(true);
+    try {
+      await fetch(`/api/services/${selectedService.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...editForm, price: Number(editForm.price), duration: Number(editForm.duration) }),
+      });
+      setShowEditDialog(false);
+      loadServices();
+    } catch (e) { console.error(e) }
+    finally { setFormSubmitting(false) }
+  };
+
+  const deleteService = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this service?")) return;
+    await fetch(`/api/services/${id}`, { method: "DELETE" });
+    loadServices();
+  };
+
+  const openEditDialog = (svc: any) => {
+    const durationParts = svc.duration?.match(/(\d+)/g);
+    const totalMinutes = durationParts ? parseInt(durationParts[0]) * 60 + (parseInt(durationParts[1]) || 0) : 60;
+    setSelectedService(svc);
+    setEditForm({
+      name: svc.name,
+      description: svc.description || "",
+      duration: totalMinutes,
+      price: parseFloat(svc.price?.replace("$", "") || "0"),
+      category: svc.category,
+    });
+    setShowEditDialog(true);
+  };
 
   if (loading) {
     return (
@@ -83,13 +150,10 @@ export default function ServicesPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Services</h1>
-          <p className="text-gray-500">
-            Manage your salon services and pricing
-          </p>
+          <p className="text-gray-500">Manage your salon services and pricing</p>
         </div>
-        <Button className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
-          <Plus className="h-4 w-4" />
-          Add Service
+        <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+          <Plus className="h-4 w-4" /> Add Service
         </Button>
       </div>
 
@@ -148,8 +212,7 @@ export default function ServicesPage() {
               <span className="text-4xl">{serviceIcons[service.name] || "✂️"}</span>
               {service.popular && (
                 <Badge className="absolute top-3 right-3 bg-white/90 text-gray-900 text-[11px] rounded-xl">
-                  <Star className="h-3 w-3 mr-0.5 fill-amber-400 text-amber-400" />
-                  Popular
+                  <Star className="h-3 w-3 mr-0.5 fill-amber-400 text-amber-400" /> Popular
                 </Badge>
               )}
             </div>
@@ -157,37 +220,21 @@ export default function ServicesPage() {
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="font-semibold text-[15px] text-gray-900">{service.name}</h3>
-                  <Badge variant="secondary" className="text-[11px] mt-1 bg-gray-100 text-gray-600">
-                    {service.category}
-                  </Badge>
+                  <Badge variant="secondary" className="text-[11px] mt-1 bg-gray-100 text-gray-600">{service.category}</Badge>
                 </div>
-                <p className="text-2xl font-bold text-violet-600">
-                  {service.price}
-                </p>
+                <p className="text-2xl font-bold text-violet-600">{service.price}</p>
               </div>
-              <p className="text-[13px] text-gray-500 mb-4">
-                {service.description}
-              </p>
-
+              <p className="text-[13px] text-gray-500 mb-4">{service.description}</p>
               <div className="flex items-center gap-4 text-[13px] text-gray-500">
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> {service.duration}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />{" "}
-                  {service.rating}
-                </span>
+                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> {service.duration}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {service.rating}</span>
                 <span>{service.bookings} bookings</span>
               </div>
-
               <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="outline" size="sm" className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
+                <Button variant="outline" size="sm" onClick={() => openEditDialog(service)} className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer">
                   <Edit className="h-3 w-3" /> Edit
                 </Button>
-                <Button variant="outline" size="sm" className="flex-1 rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">
-                  <Eye className="h-3 w-3" /> View
-                </Button>
-                <Button variant="ghost" size="icon-sm" className="text-red-500 hover:text-red-600 hover:bg-red-50">
+                <Button variant="ghost" size="icon-sm" onClick={() => deleteService(service.id)} className="text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer">
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
@@ -195,6 +242,115 @@ export default function ServicesPage() {
           </Card>
         ))}
       </div>
+
+      {/* Create Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Service</DialogTitle>
+            <DialogDescription>Add a new service to your salon menu.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} placeholder="Service name" />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <textarea
+                value={createForm.description}
+                onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] resize-none h-20"
+                placeholder="Brief description..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Duration (minutes)</Label>
+                <Input type="number" min={15} step={15} value={createForm.duration} onChange={(e) => setCreateForm({ ...createForm, duration: parseInt(e.target.value) || 60 })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Price ($)</Label>
+                <Input type="number" min={0} step={0.01} value={createForm.price} onChange={(e) => setCreateForm({ ...createForm, price: parseFloat(e.target.value) || 0 })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <select
+                value={createForm.category}
+                onChange={(e) => setCreateForm({ ...createForm, category: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                {categories.filter(c => c !== "All").map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl cursor-pointer">Cancel</Button>
+            <Button onClick={createService} disabled={formSubmitting || !createForm.name} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+              {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Save Service
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Service</DialogTitle>
+            <DialogDescription>Update service details.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Name</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <textarea
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] resize-none h-20"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Duration (minutes)</Label>
+                <Input type="number" min={15} step={15} value={editForm.duration} onChange={(e) => setEditForm({ ...editForm, duration: parseInt(e.target.value) || 60 })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Price ($)</Label>
+                <Input type="number" min={0} step={0.01} value={editForm.price} onChange={(e) => setEditForm({ ...editForm, price: parseFloat(e.target.value) || 0 })} />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Category</Label>
+              <select
+                value={editForm.category}
+                onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-[13px] bg-white"
+              >
+                {categories.filter(c => c !== "All").map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 border-t border-gray-100 pt-4">
+            <Button variant="outline" onClick={() => deleteService(selectedService?.id)} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer">
+              <Trash2 className="h-4 w-4" /> Delete
+            </Button>
+            <Button onClick={updateService} disabled={formSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+              {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
