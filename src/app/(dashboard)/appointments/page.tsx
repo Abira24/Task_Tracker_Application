@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Calendar,
   Plus,
@@ -24,103 +24,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const timeSlots = [
-  "9:00 AM",
-  "9:30 AM",
-  "10:00 AM",
-  "10:30 AM",
-  "11:00 AM",
-  "11:30 AM",
-  "12:00 PM",
-  "12:30 PM",
-  "1:00 PM",
-  "1:30 PM",
-  "2:00 PM",
-  "2:30 PM",
-  "3:00 PM",
-  "3:30 PM",
-  "4:00 PM",
-  "4:30 PM",
-  "5:00 PM",
-];
-
-const stylists = [
-  { id: 1, name: "Emma Wilson", color: "bg-violet-500" },
-  { id: 2, name: "James Brown", color: "bg-sky-500" },
-  { id: 3, name: "Sophia Lee", color: "bg-pink-500" },
-  { id: 4, name: "Mia Garcia", color: "bg-emerald-500" },
-];
-
-const appointments = [
-  {
-    id: 1,
-    client: "Sarah Johnson",
-    service: "Hair Coloring",
-    time: "9:00 AM",
-    endTime: "11:30 AM",
-    stylist: "Emma Wilson",
-    status: "confirmed",
-    color: "bg-violet-500",
-  },
-  {
-    id: 2,
-    client: "Mike Chen",
-    service: "Beard Trim & Shave",
-    time: "10:30 AM",
-    endTime: "11:15 AM",
-    stylist: "James Brown",
-    status: "in-progress",
-    color: "bg-sky-500",
-  },
-  {
-    id: 3,
-    client: "Lisa Anderson",
-    service: "Full Makeover",
-    time: "11:00 AM",
-    endTime: "2:00 PM",
-    stylist: "Sophia Lee",
-    status: "confirmed",
-    color: "bg-pink-500",
-  },
-  {
-    id: 4,
-    client: "Tom Williams",
-    service: "Haircut",
-    time: "1:00 PM",
-    endTime: "1:30 PM",
-    stylist: "Emma Wilson",
-    status: "pending",
-    color: "bg-violet-500",
-  },
-  {
-    id: 5,
-    client: "Anna Martinez",
-    service: "Manicure & Pedicure",
-    time: "2:30 PM",
-    endTime: "3:45 PM",
-    stylist: "Mia Garcia",
-    status: "confirmed",
-    color: "bg-emerald-500",
-  },
-  {
-    id: 6,
-    client: "Robert Kim",
-    service: "Deep Conditioning",
-    time: "3:00 PM",
-    endTime: "3:45 PM",
-    stylist: "James Brown",
-    status: "confirmed",
-    color: "bg-sky-500",
-  },
-  {
-    id: 7,
-    client: "Emma Davis",
-    service: "Bridal Updo",
-    time: "4:00 PM",
-    endTime: "5:30 PM",
-    stylist: "Sophia Lee",
-    status: "confirmed",
-    color: "bg-pink-500",
-  },
+  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
+  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
+  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM", "5:00 PM",
 ];
 
 const statusStyles: Record<string, string> = {
@@ -134,6 +40,20 @@ const statusStyles: Record<string, string> = {
 export default function AppointmentsPage() {
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [stylists, setStylists] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/appointments")
+      .then((r) => r.json())
+      .then((data) => {
+        setAppointments(data.appointments || []);
+        setStylists(data.stylists || []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
   const today = new Date();
   const daysInWeek = Array.from({ length: 7 }, (_, i) => {
@@ -142,9 +62,39 @@ export default function AppointmentsPage() {
     return d;
   });
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  const mappedAppointments = appointments.map((a: any) => ({
+    id: a.id,
+    client: a.client,
+    service: a.service,
+    time: a.startTime,
+    endTime: a.endTime,
+    stylist: a.stylist,
+    status: a.status,
+    color: a.stylistColor || "#8b5cf6",
+  }));
+
+  const displayStylists = stylists.length > 0 ? stylists : [
+    { id: "1", name: "Emma Wilson", color: "#8b5cf6" },
+    { id: "2", name: "James Brown", color: "#0ea5e9" },
+    { id: "3", name: "Sophia Lee", color: "#ec4899" },
+    { id: "4", name: "Mia Garcia", color: "#10b981" },
+  ];
+
+  const getStylistColor = (stylistName: string) => {
+    const s = displayStylists.find((st: any) => st.name === stylistName);
+    return s?.color || "#8b5cf6";
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Appointments</h1>
@@ -182,7 +132,6 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {/* Date navigation */}
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" className="rounded-xl border-gray-200">
           <ChevronLeft className="h-4 w-4" />
@@ -213,9 +162,7 @@ export default function AppointmentsPage() {
       </div>
 
       {view === "calendar" ? (
-        /* Calendar view - Timeline */
         <div className="grid grid-cols-1 lg:grid-cols-[100px_1fr] gap-4">
-          {/* Time column */}
           <div className="hidden lg:flex flex-col">
             {timeSlots.map((time) => (
               <div
@@ -227,13 +174,13 @@ export default function AppointmentsPage() {
             ))}
           </div>
 
-          {/* Stylist columns */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {stylists.map((stylist) => (
+            {displayStylists.map((stylist: any) => (
               <div key={stylist.id} className="space-y-2">
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-50">
                   <div
-                    className={`w-3 h-3 rounded-full ${stylist.color}`}
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: stylist.color }}
                   />
                   <span className="font-medium text-[13px] text-gray-900">{stylist.name}</span>
                 </div>
@@ -244,10 +191,9 @@ export default function AppointmentsPage() {
                       className="h-16 border-b border-dashed border-gray-100"
                     />
                   ))}
-                  {/* Appointment blocks */}
-                  {appointments
-                    .filter((a) => a.stylist === stylist.name)
-                    .map((apt) => {
+                  {mappedAppointments
+                    .filter((a: any) => a.stylist === stylist.name)
+                    .map((apt: any) => {
                       const startIdx = timeSlots.indexOf(apt.time);
                       const endIdx = timeSlots.indexOf(apt.endTime);
                       const duration = endIdx - startIdx + 1;
@@ -257,10 +203,11 @@ export default function AppointmentsPage() {
                       return (
                         <div
                           key={apt.id}
-                          className={`absolute left-1 right-1 rounded-lg p-2 border-l-4 ${apt.color} bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden`}
+                          className="absolute left-1 right-1 rounded-lg p-2 border-l-4 bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
                           style={{
                             top: `${startIdx * 64}px`,
                             height: `${Math.max(duration * 64 - 4, 30)}px`,
+                            borderLeftColor: getStylistColor(apt.stylist),
                           }}
                         >
                           <p className="text-[12px] font-semibold text-gray-900 truncate">
@@ -281,14 +228,14 @@ export default function AppointmentsPage() {
           </div>
         </div>
       ) : (
-        /* List view */
         <div className="space-y-3">
-          {appointments.map((apt) => (
+          {mappedAppointments.map((apt: any) => (
             <Card key={apt.id} className="border-gray-100 shadow-sm rounded-xl">
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
                   <div
-                    className={`flex items-center justify-center w-14 h-14 rounded-xl ${apt.color} text-white font-bold text-sm shrink-0`}
+                    className="flex items-center justify-center w-14 h-14 rounded-xl text-white font-bold text-sm shrink-0"
+                    style={{ backgroundColor: getStylistColor(apt.stylist) }}
                   >
                     <div className="text-center">
                       <p className="text-lg leading-none">
@@ -302,7 +249,7 @@ export default function AppointmentsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold text-gray-900">{apt.client}</h3>
-                      <Badge className={`text-[11px] ${statusStyles[apt.status]}`}>
+                      <Badge className={`text-[11px] ${statusStyles[apt.status] || statusStyles.confirmed}`}>
                         {apt.status}
                       </Badge>
                     </div>
@@ -325,6 +272,9 @@ export default function AppointmentsPage() {
               </CardContent>
             </Card>
           ))}
+          {mappedAppointments.length === 0 && (
+            <div className="text-center text-gray-400 py-12">No appointments found</div>
+          )}
         </div>
       )}
     </div>

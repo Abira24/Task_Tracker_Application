@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Plus,
   Search,
@@ -50,167 +50,6 @@ interface Task {
   completed: boolean;
 }
 
-const initialTasks: Task[] = [
-  {
-    id: 1,
-    title: "Restock hair coloring supplies",
-    description:
-      "Order new batch of premium hair coloring kits from supplier",
-    priority: "high",
-    status: "todo",
-    assignee: "Emma Wilson",
-    dueDate: "Today",
-    tags: ["inventory", "urgent"],
-    comments: 3,
-    attachments: 1,
-    completed: false,
-  },
-  {
-    id: 2,
-    title: "Update service menu pricing",
-    description: "Review and update all service prices for the new quarter",
-    priority: "medium",
-    status: "todo",
-    assignee: "Jane Doe",
-    dueDate: "Tomorrow",
-    tags: ["admin"],
-    comments: 1,
-    attachments: 0,
-    completed: false,
-  },
-  {
-    id: 3,
-    title: "Schedule team training session",
-    description: "Organize training for new coloring techniques",
-    priority: "medium",
-    status: "todo",
-    assignee: "Sophia Lee",
-    dueDate: "Jul 30",
-    tags: ["training"],
-    comments: 5,
-    attachments: 2,
-    completed: false,
-  },
-  {
-    id: 4,
-    title: "Deep clean treatment rooms",
-    description:
-      "Schedule deep cleaning for all treatment rooms this weekend",
-    priority: "low",
-    status: "todo",
-    assignee: "James Brown",
-    dueDate: "Aug 1",
-    tags: ["maintenance"],
-    comments: 0,
-    attachments: 0,
-    completed: false,
-  },
-  {
-    id: 5,
-    title: "Prepare monthly revenue report",
-    description: "Compile all financial data and create presentation",
-    priority: "high",
-    status: "in-progress",
-    assignee: "Jane Doe",
-    dueDate: "Today",
-    tags: ["finance", "report"],
-    comments: 8,
-    attachments: 3,
-    completed: false,
-  },
-  {
-    id: 6,
-    title: "Renew salon insurance policy",
-    description: "Contact insurance provider to renew annual policy",
-    priority: "urgent",
-    status: "in-progress",
-    assignee: "Jane Doe",
-    dueDate: "Today",
-    tags: ["admin", "legal"],
-    comments: 2,
-    attachments: 1,
-    completed: false,
-  },
-  {
-    id: 7,
-    title: "Update Instagram content calendar",
-    description: "Plan social media posts for next month",
-    priority: "medium",
-    status: "in-progress",
-    assignee: "Mia Garcia",
-    dueDate: "Jul 29",
-    tags: ["marketing"],
-    comments: 4,
-    attachments: 0,
-    completed: false,
-  },
-  {
-    id: 8,
-    title: "Fix reception area lighting",
-    description: "Replace broken fluorescent lights in the reception area",
-    priority: "low",
-    status: "review",
-    assignee: "James Brown",
-    dueDate: "Jul 28",
-    tags: ["maintenance"],
-    comments: 1,
-    attachments: 0,
-    completed: false,
-  },
-  {
-    id: 9,
-    title: "Finalize new employee onboarding docs",
-    description: "Complete all paperwork for the new stylist starting next week",
-    priority: "high",
-    status: "review",
-    assignee: "Jane Doe",
-    dueDate: "Jul 30",
-    tags: ["hr"],
-    comments: 6,
-    attachments: 4,
-    completed: false,
-  },
-  {
-    id: 10,
-    title: "Order new towel sets",
-    description: "Purchase 50 new premium towel sets for the salon",
-    priority: "medium",
-    status: "done",
-    assignee: "Emma Wilson",
-    dueDate: "Jul 25",
-    tags: ["inventory"],
-    comments: 2,
-    attachments: 0,
-    completed: true,
-  },
-  {
-    id: 11,
-    title: "Set up online booking system",
-    description: "Configure the new online appointment booking platform",
-    priority: "high",
-    status: "done",
-    assignee: "Sophia Lee",
-    dueDate: "Jul 24",
-    tags: ["tech"],
-    comments: 12,
-    attachments: 5,
-    completed: true,
-  },
-  {
-    id: 12,
-    title: "Clean and sanitize tools",
-    description: "Monthly deep clean of all salon tools and equipment",
-    priority: "medium",
-    status: "done",
-    assignee: "Mia Garcia",
-    dueDate: "Jul 23",
-    tags: ["maintenance"],
-    comments: 0,
-    attachments: 0,
-    completed: true,
-  },
-];
-
 const columns: { id: Status; title: string; icon: React.ElementType; color: string }[] = [
   { id: "todo", title: "To Do", icon: Circle, color: "text-gray-500" },
   { id: "in-progress", title: "In Progress", icon: Clock, color: "text-sky-600" },
@@ -226,22 +65,39 @@ const priorityConfig: Record<Priority, { color: string; badge: string; icon: Rea
 };
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterPriority, setFilterPriority] = useState<Priority | "all">("all");
+  const [loading, setLoading] = useState(true);
 
-  const toggleComplete = (id: number) => {
+  useEffect(() => {
+    fetch("/api/tasks")
+      .then((r) => r.json())
+      .then((data) => {
+        setTasks(data.tasks || []);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const toggleComplete = async (id: number) => {
+    const task = tasks.find((t: any) => t.id === id);
+    if (!task) return;
+
+    const newStatus = task.completed ? "todo" : "done";
     setTasks((prev) =>
-      prev.map((t) =>
+      prev.map((t: any) =>
         t.id === id
-          ? {
-              ...t,
-              completed: !t.completed,
-              status: !t.completed ? "done" : "todo",
-            }
+          ? { ...t, completed: !t.completed, status: newStatus }
           : t
       )
     );
+
+    await fetch(`/api/tasks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: newStatus }),
+    });
   };
 
   const filtered = tasks.filter((t) => {
@@ -261,9 +117,16 @@ export default function TasksPage() {
     urgent: tasks.filter((t) => t.priority === "urgent").length,
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
@@ -280,39 +143,13 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          {
-            label: "Total Tasks",
-            value: stats.total,
-            bg: "bg-violet-50",
-            textColor: "text-violet-700",
-          },
-          {
-            label: "To Do",
-            value: stats.todo,
-            bg: "bg-gray-100",
-            textColor: "text-gray-700",
-          },
-          {
-            label: "In Progress",
-            value: stats.inProgress,
-            bg: "bg-sky-50",
-            textColor: "text-sky-700",
-          },
-          {
-            label: "Done",
-            value: stats.done,
-            bg: "bg-emerald-50",
-            textColor: "text-emerald-700",
-          },
-          {
-            label: "Urgent",
-            value: stats.urgent,
-            bg: "bg-red-50",
-            textColor: "text-red-700",
-          },
+          { label: "Total Tasks", value: stats.total, bg: "bg-violet-50", textColor: "text-violet-700" },
+          { label: "To Do", value: stats.todo, bg: "bg-gray-100", textColor: "text-gray-700" },
+          { label: "In Progress", value: stats.inProgress, bg: "bg-sky-50", textColor: "text-sky-700" },
+          { label: "Done", value: stats.done, bg: "bg-emerald-50", textColor: "text-emerald-700" },
+          { label: "Urgent", value: stats.urgent, bg: "bg-red-50", textColor: "text-red-700" },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -324,7 +161,6 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {/* Search and filters */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="relative flex-1 max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -352,7 +188,6 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Kanban board */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {columns.map((col) => {
           const columnTasks = filtered.filter((t) => t.status === col.id);
@@ -360,7 +195,6 @@ export default function TasksPage() {
 
           return (
             <div key={col.id} className="space-y-3">
-              {/* Column header */}
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <Icon className={`h-4 w-4 ${col.color}`} />
@@ -374,10 +208,9 @@ export default function TasksPage() {
                 </Button>
               </div>
 
-              {/* Task cards */}
               <div className="space-y-2 min-h-[200px]">
-                {columnTasks.map((task) => {
-                  const prio = priorityConfig[task.priority];
+                {columnTasks.map((task: any) => {
+                  const prio = priorityConfig[task.priority as Priority] || priorityConfig.medium;
 
                   return (
                     <Card
@@ -417,9 +250,8 @@ export default function TasksPage() {
                           </div>
                         </div>
 
-                        {/* Tags */}
                         <div className="flex flex-wrap gap-1 mt-2">
-                          {task.tags.map((tag) => (
+                          {task.tags?.map((tag: string) => (
                             <Badge
                               key={tag}
                               variant="secondary"
@@ -430,14 +262,13 @@ export default function TasksPage() {
                           ))}
                         </div>
 
-                        {/* Footer */}
                         <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
                               <AvatarFallback className="text-[8px] bg-violet-50 text-violet-600">
                                 {task.assignee
                                   .split(" ")
-                                  .map((n) => n[0])
+                                  .map((n: string) => n[0])
                                   .join("")}
                               </AvatarFallback>
                             </Avatar>

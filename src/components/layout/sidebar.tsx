@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -29,7 +29,7 @@ const navItems = [
   { title: "Appointments", href: "/appointments", icon: Calendar },
   { title: "Customers", href: "/customers", icon: Users },
   { title: "Services", href: "/services", icon: Scissors },
-  { title: "Tasks", href: "/tasks", icon: CheckSquare, badge: "5" },
+  { title: "Tasks", href: "/tasks", icon: CheckSquare, badge: "" },
   { title: "Inventory", href: "/inventory", icon: Package },
   { title: "Analytics", href: "/analytics", icon: BarChart3 },
   { title: "Settings", href: "/settings", icon: Settings },
@@ -38,7 +38,17 @@ const navItems = [
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const pathname = usePathname();
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) setUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
 
   const isActive = (href: string) => pathname === href;
 
@@ -47,9 +57,12 @@ export function Sidebar() {
     await logout();
   };
 
+  const initials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
+    : "JD";
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
-      {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-100">
         <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-sm">
           <Sparkles className="h-4.5 w-4.5 text-white" />
@@ -66,7 +79,6 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map((item) => {
           const active = isActive(item.href);
@@ -104,7 +116,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* User section */}
       <div className="px-3 py-4 border-t border-gray-100">
         <div
           className={cn(
@@ -114,15 +125,15 @@ export function Sidebar() {
         >
           <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-bold">
-              JD
+              {initials}
             </AvatarFallback>
           </Avatar>
-          {!collapsed && (
+          {!collapsed && user && (
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-semibold text-gray-900 truncate">
-                Jane Doe
+                {user.name}
               </p>
-              <p className="text-[11px] text-gray-400 truncate">Admin</p>
+              <p className="text-[11px] text-gray-400 truncate capitalize">{user.role}</p>
             </div>
           )}
           {!collapsed && (
