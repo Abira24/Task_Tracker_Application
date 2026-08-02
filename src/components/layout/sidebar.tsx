@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
@@ -39,15 +39,31 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
+  const [salonName, setSalonName] = useState("Muvi Salon");
+  const [logo, setLogo] = useState<string | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
-      .then((data) => {
-        if (data.user) setUser(data.user);
-      })
+      .then((data) => { if (data.user) setUser(data.user); })
       .catch(() => {});
+
+    const loadSettings = () => {
+      fetch("/api/settings")
+        .then((r) => r.json())
+        .then((data) => {
+          const s = data.settings;
+          if (s?.salonName) setSalonName(s.salonName);
+          if (s?.logo) setLogo(s.logo);
+          else setLogo(null);
+        })
+        .catch(() => {});
+    };
+
+    loadSettings();
+    window.addEventListener("settings-updated", loadSettings);
+    return () => window.removeEventListener("settings-updated", loadSettings);
   }, []);
 
   const isActive = (href: string) => pathname === href;
@@ -61,28 +77,40 @@ export function Sidebar() {
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase()
     : "JD";
 
+  const nameParts = salonName.split(" ");
+  const displayName = nameParts.length > 1 ? nameParts[0] : salonName;
+  const subDisplay = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Salon";
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-100">
         <div className="flex items-center justify-center w-12 h-12 rounded-2xl gradient-primary shadow-md overflow-hidden shrink-0 p-0.5">
           <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center overflow-hidden">
-            <Image
-              src="/logo.jpeg"
-              alt="Muvi Salon Logo"
-              className="w-full h-full object-cover"
-              width={44}
-              height={44}
-              priority
-            />
+            {logo ? (
+              <img
+                src={logo}
+                alt={`${salonName} Logo`}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Image
+                src="/logo.jpeg"
+                alt={`${salonName} Logo`}
+                className="w-full h-full object-cover"
+                width={44}
+                height={44}
+                priority
+              />
+            )}
           </div>
         </div>
         {!collapsed && (
           <div className="flex flex-col">
             <span className="font-bold text-gray-900 text-[16px] leading-tight tracking-tight">
-              Muvi
+              {displayName}
             </span>
             <span className="text-[10px] text-primary font-semibold tracking-wider uppercase">
-              Salon
+              {subDisplay}
             </span>
           </div>
         )}
@@ -99,7 +127,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
                 active
-                  ? "bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/5 text-primary shadow-sm"
+                  ? "bg-gradient-to-r from-primary/10 via-primary/5 to-primary/[0.02] text-primary shadow-sm"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               )}
               title={collapsed ? item.title : undefined}
@@ -133,7 +161,7 @@ export function Sidebar() {
           )}
         >
           <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-            <AvatarFallback className="bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 text-white text-xs font-bold">
+            <AvatarFallback className="bg-gradient-to-br from-primary-400 via-primary-500 to-primary-700 text-white text-xs font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>

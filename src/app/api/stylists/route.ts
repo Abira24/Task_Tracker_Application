@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
 export async function GET() {
@@ -10,5 +10,24 @@ export async function GET() {
   } catch (error) {
     console.error("Stylists error:", error);
     return NextResponse.json({ error: "Failed to fetch stylists" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { name, email, phone, color } = body;
+    if (!name || !email) {
+      return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
+    }
+    const id = `stylist_${Date.now()}`;
+    await query(
+      "INSERT INTO Stylist (id, name, email, phone, color, isActive) VALUES (?, ?, ?, ?, ?, 1)",
+      [id, name, email, phone || null, color || "#8b5cf6"]
+    );
+    return NextResponse.json({ id, success: true });
+  } catch (error) {
+    console.error("Create stylist error:", error);
+    return NextResponse.json({ error: "Failed to create stylist" }, { status: 500 });
   }
 }

@@ -244,7 +244,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-purple-500 to-fuchsia-500 opacity-60" />
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary/50 to-primary/30 opacity-60" />
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">

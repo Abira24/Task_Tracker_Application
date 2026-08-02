@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Lexend_Deca } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const lexendDeca = Lexend_Deca({
   variable: "--font-lexend-deca",
@@ -10,7 +11,7 @@ const lexendDeca = Lexend_Deca({
 
 export const metadata: Metadata = {
   title: "Muvi Salon",
-  description: "Modern salon management system with task tracking",
+  description: "Modern salon management system",
 };
 
 export default function RootLayout({
@@ -22,8 +23,11 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${lexendDeca.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }

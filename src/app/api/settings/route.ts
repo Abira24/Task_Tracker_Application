@@ -13,36 +13,43 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { salonName, phone, email, website, address, notifications } = body;
+    const { salonName, phone, email, website, address, notifications, theme, logo } = body;
 
     try {
       await query(
-        `INSERT INTO SalonSettings (id, salonName, phone, email, website, address, notifications) 
-         VALUES ('settings_1', ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE salonName=?, phone=?, email=?, website=?, address=?, notifications=?`,
-        [salonName, phone, email, website, address, JSON.stringify(notifications),
-         salonName, phone, email, website, address, JSON.stringify(notifications)]
+        `INSERT INTO SalonSettings (id, salonName, phone, email, website, address, notifications, theme, logo)
+         VALUES ('settings_1', ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE salonName=?, phone=?, email=?, website=?, address=?, notifications=?, theme=?, logo=?`,
+        [
+          salonName, phone, email, website, address, JSON.stringify(notifications), JSON.stringify(theme), logo || null,
+          salonName, phone, email, website, address, JSON.stringify(notifications), JSON.stringify(theme), logo || null,
+        ]
       );
     } catch {
       await query(
         `CREATE TABLE IF NOT EXISTS SalonSettings (
           id VARCHAR(255) NOT NULL PRIMARY KEY,
-          salonName VARCHAR(255) DEFAULT 'Glamour Salon',
-          phone VARCHAR(50) DEFAULT '+1 (555) 123-4567',
-          email VARCHAR(255) DEFAULT 'hello@glamoursalon.com',
-          website VARCHAR(255) DEFAULT 'www.glamoursalon.com',
+          salonName VARCHAR(255) DEFAULT 'Muvi Salon',
+          phone VARCHAR(50) DEFAULT '',
+          email VARCHAR(255) DEFAULT '',
+          website VARCHAR(255) DEFAULT '',
           address TEXT,
           notifications JSON,
+          theme JSON,
+          logo MEDIUMTEXT,
           createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
           updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`
       );
+      await query(`ALTER TABLE SalonSettings MODIFY COLUMN logo MEDIUMTEXT`).catch(() => {});
       await query(
-        `INSERT INTO SalonSettings (id, salonName, phone, email, website, address, notifications) 
-         VALUES ('settings_1', ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE salonName=?, phone=?, email=?, website=?, address=?, notifications=?`,
-        [salonName, phone, email, website, address, JSON.stringify(notifications),
-         salonName, phone, email, website, address, JSON.stringify(notifications)]
+        `INSERT INTO SalonSettings (id, salonName, phone, email, website, address, notifications, theme, logo)
+         VALUES ('settings_1', ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE salonName=?, phone=?, email=?, website=?, address=?, notifications=?, theme=?, logo=?`,
+        [
+          salonName, phone, email, website, address, JSON.stringify(notifications), JSON.stringify(theme), logo || null,
+          salonName, phone, email, website, address, JSON.stringify(notifications), JSON.stringify(theme), logo || null,
+        ]
       );
     }
 
@@ -56,17 +63,22 @@ export async function PUT(request: NextRequest) {
 function getDefaultSettings() {
   return {
     id: "settings_1",
-    salonName: "Glamour Salon",
-    phone: "+1 (555) 123-4567",
-    email: "hello@glamoursalon.com",
-    website: "www.glamoursalon.com",
-    address: "123 Beauty Street, Suite 100, New York, NY 10001",
+    salonName: "Muvi Salon",
+    phone: "",
+    email: "",
+    website: "",
+    address: "",
+    logo: null,
     notifications: {
       newAppointment: true,
       reminders: true,
       lowInventory: true,
       newCustomer: true,
       dailyRevenue: true,
+    },
+    theme: {
+      primaryColor: "#be2ed6",
+      mode: "light",
     },
   };
 }
