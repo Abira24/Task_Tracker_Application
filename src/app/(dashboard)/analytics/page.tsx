@@ -126,7 +126,7 @@ export default function ReportsPage() {
         <Button
           onClick={exportDailySummary}
           disabled={exporting || !daily}
-          className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20"
+          className="bg-primary hover:bg-primary/90 text-white rounded-lg cursor-pointer shadow-sm shadow-primary/20"
         >
           {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <FileSpreadsheet className="h-4 w-4 mr-1.5" />}
           Export Daily Summary
@@ -136,7 +136,7 @@ export default function ReportsPage() {
       {/* Daily Summary */}
       {daily && (
         <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
-          <div className="bg-gradient-to-r from-primary via-purple-500 to-fuchsia-500 px-6 py-4">
+          <div className="bg-gradient-to-r from-primary to-primary/80 px-6 py-4">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-white font-semibold text-[16px]">Today&apos;s Summary</h2>
@@ -266,8 +266,8 @@ export default function ReportsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50">
-              <DollarSign className="h-5 w-5 text-primary" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100">
+              <DollarSign className="h-5 w-5 text-gray-600" />
             </div>
             <div>
               <p className="text-[12px] text-gray-500">All-Time Revenue</p>
@@ -277,8 +277,8 @@ export default function ReportsPage() {
         </Card>
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50">
-              <Calendar className="h-5 w-5 text-sky-600" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100">
+              <Calendar className="h-5 w-5 text-gray-600" />
             </div>
             <div>
               <p className="text-[12px] text-gray-500">Total Appointments</p>
@@ -288,8 +288,8 @@ export default function ReportsPage() {
         </Card>
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardContent className="p-5 flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50">
-              <Users className="h-5 w-5 text-emerald-600" />
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gray-100">
+              <Users className="h-5 w-5 text-gray-600" />
             </div>
             <div>
               <p className="text-[12px] text-gray-500">Total Customers</p>
@@ -315,7 +315,7 @@ export default function ReportsPage() {
                   <span className="w-8 text-[12px] text-gray-500 font-medium">{rd.month}</span>
                   <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
                     <div
-                      className="h-full bg-primary-500 rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                      className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
                       style={{ width: `${Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100)}%` }}
                     >
                       <span className="text-[10px] font-bold text-white">
@@ -343,7 +343,7 @@ export default function ReportsPage() {
                     <span className="text-[12px] font-bold text-gray-900">{s.percentage}%</span>
                   </div>
                   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.percentage}%` }} />
+                    <div className="h-full bg-primary rounded-full transition-all duration-500" style={{ width: `${s.percentage}%` }} />
                   </div>
                 </div>
               ))}
@@ -371,7 +371,7 @@ export default function ReportsPage() {
                       className="h-full rounded-lg transition-all duration-500"
                       style={{
                         width: `${hour.percentage}%`,
-                        background: hour.percentage > 80 ? "#ec4899" : hour.percentage > 60 ? "#8b5cf6" : "#0ea5e9",
+                        backgroundColor: hour.percentage > 80 ? "var(--primary)" : hour.percentage > 60 ? "color-mix(in srgb, var(--primary) 70%, transparent)" : "color-mix(in srgb, var(--primary) 40%, transparent)",
                       }}
                     />
                   </div>
@@ -393,7 +393,7 @@ export default function ReportsPage() {
             <div className="space-y-3">
               {topStylists.map((stylist: any, i: number) => (
                 <div key={stylist.name} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg font-bold text-white text-[12px] shrink-0" style={{ backgroundColor: stylist.color }}>
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 font-bold text-gray-600 text-[12px] shrink-0">
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">

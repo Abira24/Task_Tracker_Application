@@ -241,31 +241,27 @@ export default function SettingsPage() {
         <p className="text-gray-500 text-[13px]">Manage your salon preferences and team</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] gap-6">
-        {/* Sidebar */}
-        <Card className="h-fit border-gray-100 shadow-sm rounded-xl">
-          <CardContent className="p-2">
-            <nav className="space-y-0.5">
-              {tabs.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all cursor-pointer ${
-                    activeTab === item.id
-                      ? "bg-primary-50 text-primary"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </button>
-              ))}
-            </nav>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
+        {/* Sidebar Tabs */}
+        <div className="space-y-1">
+          {tabs.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all cursor-pointer ${
+                activeTab === item.id
+                  ? "bg-primary/10 text-primary"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+              }`}
+            >
+              <item.icon className="h-4 w-4" />
+              {item.label}
+            </button>
+          ))}
+        </div>
 
         <div className="space-y-6">
-          {/* Salon Info */}
+          {/* Salon Info Tab */}
           {activeTab === "salon" && (
             <Card className="border-gray-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -275,14 +271,14 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Logo */}
-                <div className="flex items-center gap-4">
+                {/* Logo Upload */}
+                <div className="flex items-center gap-5">
                   <div className="relative group">
-                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center transition-colors group-hover:border-primary/40">
                       {logo ? (
                         <img src={logo} alt="Logo" className="w-full h-full object-cover" />
                       ) : (
-                        <Camera className="h-6 w-6 text-gray-400" />
+                        <Camera className="h-6 w-6 text-gray-300" />
                       )}
                     </div>
                     <label className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-2xl cursor-pointer transition-opacity">
@@ -306,38 +302,38 @@ export default function SettingsPage() {
 
                 <Separator className="bg-gray-100" />
 
-                {/* Contact info */}
+                {/* Contact Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-[13px] text-gray-700">Salon Name</Label>
-                    <Input value={salonName} onChange={(e) => setSalonName(e.target.value)} className="rounded-xl text-[13px]" />
+                    <Input value={salonName} onChange={(e) => setSalonName(e.target.value)} className="rounded-lg text-[13px]" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[13px] text-gray-700">Phone</Label>
-                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" className="rounded-xl text-[13px]" />
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" className="rounded-lg text-[13px]" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[13px] text-gray-700">Email</Label>
-                    <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hello@salon.com" className="rounded-xl text-[13px]" />
+                    <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="hello@salon.com" className="rounded-lg text-[13px]" />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[13px] text-gray-700">Website</Label>
-                    <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="www.salon.com" className="rounded-xl text-[13px]" />
+                    <Input value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="www.salon.com" className="rounded-lg text-[13px]" />
                   </div>
                   <div className="md:col-span-2 space-y-2">
                     <Label className="text-[13px] text-gray-700">Address</Label>
-                    <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Beauty Street, City" className="rounded-xl text-[13px]" />
+                    <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="123 Beauty Street, City" className="rounded-lg text-[13px]" />
                   </div>
                 </div>
 
                 <Separator className="bg-gray-100" />
 
-                {/* Business hours */}
+                {/* Business Hours */}
                 <div>
                   <h3 className="font-semibold text-[14px] text-gray-900 mb-3">Business Hours</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((day) => (
-                      <div key={day} className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                      <div key={day} className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100">
                         <span className="text-[13px] font-medium text-gray-900">{day}</span>
                         {day === "Sunday" ? (
                           <span className="text-[12px] text-gray-400 italic">Closed</span>
@@ -355,7 +351,7 @@ export default function SettingsPage() {
                       <CheckCircle2 className="h-4 w-4" /> Saved
                     </span>
                   )}
-                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
+                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-lg text-[13px] cursor-pointer">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
                     Save
                   </Button>
@@ -364,7 +360,7 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {/* Appearance */}
+          {/* Appearance Tab */}
           {activeTab === "appearance" && (
             <Card className="border-gray-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -374,10 +370,10 @@ export default function SettingsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Theme mode */}
+                {/* Theme Mode */}
                 <div>
                   <Label className="text-[13px] text-gray-700 font-medium mb-3 block">Theme Mode</Label>
-                  <div className="flex gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {(["light", "dark"] as const).map((m) => (
                       <button
                         key={m}
@@ -385,22 +381,22 @@ export default function SettingsPage() {
                           setMode(m);
                           applyTheme(primaryColor, m);
                         }}
-                        className={`flex-1 p-4 rounded-xl border-2 transition-all cursor-pointer ${
+                        className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all cursor-pointer ${
                           mode === m
-                            ? "border-primary bg-primary-50 shadow-sm"
+                            ? "border-primary bg-primary/5 shadow-sm"
                             : "border-gray-200 hover:border-gray-300 bg-white"
                         }`}
                       >
-                        <div className={`w-10 h-10 rounded-lg mx-auto mb-2 flex items-center justify-center ${
-                          m === "light" ? "bg-white border border-gray-200" : "bg-gray-800"
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                          m === "light" ? "bg-white border border-gray-200 shadow-sm" : "bg-gray-800 shadow-md"
                         }`}>
                           {m === "light" ? (
-                            <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                            <div className="w-5 h-5 rounded-full bg-yellow-400" />
                           ) : (
-                            <div className="w-4 h-4 rounded-full bg-gray-600" />
+                            <div className="w-5 h-5 rounded-full bg-gray-500" />
                           )}
                         </div>
-                        <p className={`text-[13px] font-medium ${mode === m ? "text-primary" : "text-gray-700"}`}>
+                        <p className={`text-[13px] font-medium ${mode === m ? "text-primary" : "text-gray-600"}`}>
                           {m === "light" ? "Light" : "Dark"}
                         </p>
                       </button>
@@ -410,7 +406,7 @@ export default function SettingsPage() {
 
                 <Separator className="bg-gray-100" />
 
-                {/* Color palette */}
+                {/* Color Palette */}
                 <div>
                   <Label className="text-[13px] text-gray-700 font-medium mb-3 block">Primary Color</Label>
                   <div className="grid grid-cols-4 gap-3">
@@ -421,18 +417,20 @@ export default function SettingsPage() {
                           setPrimaryColor(c.value);
                           applyTheme(c.value, mode);
                         }}
-                        className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all cursor-pointer ${
+                        className={`flex flex-col items-center gap-2 p-3 rounded-xl transition-all cursor-pointer ${
                           primaryColor === c.value
-                            ? "border-primary shadow-sm bg-primary-50"
-                            : "border-transparent hover:bg-gray-50"
+                            ? "bg-primary/5 ring-2 ring-primary ring-offset-2"
+                            : "hover:bg-gray-50"
                         }`}
                       >
                         <div className="w-8 h-8 rounded-full shadow-sm" style={{ backgroundColor: c.value }} />
-                        <span className="text-[11px] font-medium text-gray-700">{c.name}</span>
+                        <span className="text-[11px] font-medium text-gray-600">{c.name}</span>
                       </button>
                     ))}
                   </div>
                 </div>
+
+                <Separator className="bg-gray-100" />
 
                 {/* Preview */}
                 <div>
@@ -459,7 +457,7 @@ export default function SettingsPage() {
                       <CheckCircle2 className="h-4 w-4" /> Saved
                     </span>
                   )}
-                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
+                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-lg text-[13px] cursor-pointer">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
                     Save
                   </Button>
@@ -468,7 +466,7 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {/* Stylists */}
+          {/* Stylists Tab */}
           {activeTab === "stylists" && (
             <Card className="border-gray-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -481,7 +479,7 @@ export default function SettingsPage() {
                   </div>
                   <Button
                     onClick={() => setShowAddStylist(true)}
-                    className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer"
+                    className="bg-primary hover:bg-primary/90 text-white rounded-lg text-[13px] cursor-pointer"
                     size="sm"
                   >
                     <Plus className="h-4 w-4 mr-1" /> Add Stylist
@@ -498,7 +496,7 @@ export default function SettingsPage() {
                 ) : (
                   <div className="space-y-2">
                     {stylists.map((s) => (
-                      <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+                      <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors group">
                         <div
                           className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-[12px] shrink-0"
                           style={{ backgroundColor: s.color }}
@@ -529,7 +527,7 @@ export default function SettingsPage() {
             </Card>
           )}
 
-          {/* Notifications */}
+          {/* Notifications Tab */}
           {activeTab === "notifications" && (
             <Card className="border-gray-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -553,8 +551,8 @@ export default function SettingsPage() {
                     </div>
                     <button
                       onClick={() => toggleNotification(item.key)}
-                      className={`w-10 h-6 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
-                        notifications[item.key] ? "bg-primary" : "bg-gray-300"
+                      className={`relative w-10 h-6 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
+                        notifications[item.key] ? "bg-primary" : "bg-gray-200"
                       }`}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${
@@ -569,7 +567,7 @@ export default function SettingsPage() {
                       <CheckCircle2 className="h-4 w-4" /> Saved
                     </span>
                   )}
-                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
+                  <Button onClick={() => saveSettings()} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-lg text-[13px] cursor-pointer">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
                     Save
                   </Button>
@@ -594,7 +592,7 @@ export default function SettingsPage() {
                 value={newStylist.name}
                 onChange={(e) => setNewStylist({ ...newStylist, name: e.target.value })}
                 placeholder="e.g. Emma Wilson"
-                className="rounded-xl text-[13px]"
+                className="rounded-lg text-[13px]"
               />
             </div>
             <div className="space-y-2">
@@ -604,7 +602,7 @@ export default function SettingsPage() {
                 value={newStylist.email}
                 onChange={(e) => setNewStylist({ ...newStylist, email: e.target.value })}
                 placeholder="e.g. emma@salon.com"
-                className="rounded-xl text-[13px]"
+                className="rounded-lg text-[13px]"
               />
             </div>
             <div className="space-y-2">
@@ -613,7 +611,7 @@ export default function SettingsPage() {
                 value={newStylist.phone}
                 onChange={(e) => setNewStylist({ ...newStylist, phone: e.target.value })}
                 placeholder="+1 (555) 000-0000"
-                className="rounded-xl text-[13px]"
+                className="rounded-lg text-[13px]"
               />
             </div>
             <div className="space-y-2">
@@ -633,13 +631,13 @@ export default function SettingsPage() {
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowAddStylist(false)} className="rounded-xl cursor-pointer">
+            <Button variant="outline" onClick={() => setShowAddStylist(false)} className="rounded-lg cursor-pointer">
               Cancel
             </Button>
             <Button
               onClick={addStylist}
               disabled={!newStylist.name || !newStylist.email}
-              className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white rounded-lg cursor-pointer"
             >
               Add Stylist
             </Button>

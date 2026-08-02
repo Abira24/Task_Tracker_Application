@@ -271,21 +271,24 @@ function TasksContent() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-            <ListTodo className="h-6 w-6 text-primary" /> Task Board
+          <h1 className="text-xl font-bold tracking-tight text-gray-900 flex items-center gap-2.5">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <ListTodo className="h-5 w-5 text-primary" />
+            </div>
+            Task Board
           </h1>
-          <p className="text-gray-500 text-[13px]">Manage salon operations and team tasks</p>
+          <p className="text-gray-500 text-[13px] mt-1 ml-[42px]">Manage salon operations and team tasks</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-100 rounded-xl p-1">
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center bg-gray-100/80 rounded-xl p-1 border border-gray-200/50">
             <button
               onClick={() => setView("board")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer ${
-                view === "board" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+                view === "board" ? "bg-white shadow-sm text-gray-900 shadow-gray-200/50" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <LayoutGrid className="h-3.5 w-3.5" /> Board
@@ -293,13 +296,13 @@ function TasksContent() {
             <button
               onClick={() => setView("list")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all cursor-pointer ${
-                view === "list" ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
+                view === "list" ? "bg-white shadow-sm text-gray-900 shadow-gray-200/50" : "text-gray-500 hover:text-gray-700"
               }`}
             >
               <LayoutList className="h-3.5 w-3.5" /> List
             </button>
           </div>
-          <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20">
+          <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20 h-9 px-4 text-[13px] font-medium">
             <Plus className="h-4 w-4" /> New Task
           </Button>
         </div>
@@ -308,14 +311,14 @@ function TasksContent() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: "Total", value: stats.total, bg: "bg-primary-50", text: "text-primary-700" },
-          { label: "To Do", value: stats.todo, bg: "bg-gray-100", text: "text-gray-600" },
-          { label: "In Progress", value: stats.inProgress, bg: "bg-sky-50", text: "text-sky-700" },
-          { label: "Done", value: stats.done, bg: "bg-emerald-50", text: "text-emerald-700" },
-          { label: "Urgent", value: stats.urgent, bg: "bg-red-50", text: "text-red-600" },
+          { label: "Total", value: stats.total, bg: "bg-primary/5", text: "text-primary-700", ring: "ring-primary/10" },
+          { label: "To Do", value: stats.todo, bg: "bg-gray-50", text: "text-gray-600", ring: "ring-gray-200" },
+          { label: "In Progress", value: stats.inProgress, bg: "bg-sky-50", text: "text-sky-700", ring: "ring-sky-200" },
+          { label: "Done", value: stats.done, bg: "bg-emerald-50", text: "text-emerald-700", ring: "ring-emerald-200" },
+          { label: "Urgent", value: stats.urgent, bg: "bg-red-50", text: "text-red-600", ring: "ring-red-200" },
         ].map((stat) => (
-          <div key={stat.label} className={`flex items-center gap-3 p-3 rounded-xl ${stat.bg}`}>
-            <p className={`text-2xl font-bold ${stat.text}`}>{stat.value}</p>
+          <div key={stat.label} className={`flex items-center gap-3 p-3.5 rounded-xl ${stat.bg} ring-1 ${stat.ring}`}>
+            <p className={`text-xl font-bold ${stat.text}`}>{stat.value}</p>
             <p className={`text-[12px] font-medium ${stat.text}`}>{stat.label}</p>
           </div>
         ))}
@@ -329,7 +332,7 @@ function TasksContent() {
             placeholder="Search tasks..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 rounded-xl border-gray-200 text-[13px] bg-white"
+            className="pl-10 pr-4 rounded-xl border-gray-200/80 text-[13px] bg-white/80 focus:bg-white transition-colors h-9"
           />
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -337,10 +340,10 @@ function TasksContent() {
             <button
               key={p}
               onClick={() => setFilterPriority(p)}
-              className={`px-2.5 py-1 rounded-lg text-[12px] font-medium transition-all cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-all cursor-pointer border ${
                 filterPriority === p
-                  ? "bg-primary text-white shadow-sm"
-                  : "bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200"
+                  ? "bg-primary text-white border-primary shadow-sm shadow-primary/20"
+                  : "bg-white text-gray-500 border-gray-200/80 hover:text-gray-700 hover:border-gray-300 hover:bg-gray-50"
               }`}
             >
               {p === "all" ? "All" : priorityConfig[p].label}
@@ -351,7 +354,7 @@ function TasksContent() {
           <select
             value={filterStylist}
             onChange={(e) => setFilterStylist(e.target.value)}
-            className="rounded-xl border border-gray-200 px-3 py-1.5 text-[12px] font-medium bg-white text-gray-700 cursor-pointer"
+            className="rounded-xl border border-gray-200/80 px-3 py-1.5 text-[12px] font-medium bg-white text-gray-700 cursor-pointer h-9"
           >
             <option value="all">All Stylists</option>
             {stylists.map((s) => (
@@ -371,24 +374,24 @@ function TasksContent() {
             return (
               <div
                 key={col.id}
-                className={`space-y-2.5 min-h-[300px] rounded-xl p-2.5 transition-colors duration-200 ${
-                  isOver ? "bg-primary/5 ring-2 ring-primary/30" : "bg-gray-50/50"
+                className={`space-y-2.5 min-h-[300px] rounded-xl p-2.5 transition-all duration-200 ${
+                  isOver ? "bg-primary/5 ring-2 ring-primary/20 ring-offset-1" : "bg-gray-50/60"
                 }`}
                 onDragOver={(e) => handleDragOver(e, col.id)}
                 onDragLeave={handleDragLeave}
                 onDrop={(e) => handleDrop(e, col.id)}
               >
                 {/* Column Header */}
-                <div className="flex items-center justify-between px-1.5 pb-1">
-                  <div className="flex items-center gap-2">
-                    <div className={`p-1 rounded-lg ${col.bg}`}>
+                <div className="flex items-center justify-between px-2 pb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`p-1.5 rounded-lg ${col.bg}`}>
                       <Icon className={`h-3.5 w-3.5 ${col.color}`} />
                     </div>
                     <h3 className="font-semibold text-[13px] text-gray-800">{col.title}</h3>
-                    <span className="flex items-center justify-center min-w-[20px] h-5 rounded-full bg-gray-200 text-[10px] font-bold text-gray-600 px-1.5">
-                      {columnTasks.length}
-                    </span>
                   </div>
+                  <span className="flex items-center justify-center min-w-[22px] h-[22px] rounded-full bg-gray-200/80 text-[11px] font-bold text-gray-600 px-1.5">
+                    {columnTasks.length}
+                  </span>
                 </div>
 
                 {/* Task Cards */}
@@ -403,16 +406,16 @@ function TasksContent() {
                         onDragStart={(e) => handleDragStart(e as any, task.id)}
                         onDragEnd={handleDragEnd}
                         onClick={() => openEditDialog(task)}
-                        className={`group cursor-grab active:cursor-grabbing border-l-[3px] ${prio.border} shadow-sm rounded-xl hover:shadow-md transition-all duration-200 ${
-                          isDragging ? "opacity-50 scale-95" : ""
+                        className={`group cursor-grab active:cursor-grabbing border-l-[3px] ${prio.border} shadow-sm rounded-xl hover:shadow-md hover:shadow-gray-200/50 transition-all duration-200 border border-gray-100 ${
+                          isDragging ? "opacity-40 scale-95 rotate-1" : ""
                         }`}
                       >
-                        <CardContent className="p-3">
+                        <CardContent className="p-3.5">
                           {/* Title + Priority */}
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <GripVertical className="h-3.5 w-3.5 text-gray-300 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                              <p className={`font-medium text-[13px] text-gray-900 leading-tight ${task.completed ? "line-through text-gray-400" : ""}`}>
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div className="flex items-start gap-2 flex-1 min-w-0">
+                              <GripVertical className="h-3.5 w-3.5 text-gray-300 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                              <p className={`font-medium text-[13px] text-gray-900 leading-snug ${task.completed ? "line-through text-gray-400" : ""}`}>
                                 {task.title}
                               </p>
                             </div>
@@ -426,14 +429,14 @@ function TasksContent() {
 
                           {/* Description */}
                           {task.description && (
-                            <p className="text-[11px] text-gray-500 line-clamp-2 mb-2 ml-5.5">{task.description}</p>
+                            <p className="text-[11px] text-gray-500 line-clamp-2 mb-2.5 ml-5.5 leading-relaxed">{task.description}</p>
                           )}
 
                           {/* Tags */}
                           {task.tags?.length > 0 && (
-                            <div className="flex flex-wrap gap-1 mb-2 ml-5.5">
+                            <div className="flex flex-wrap gap-1 mb-2.5 ml-5.5">
                               {task.tags.slice(0, 3).map((tag: string) => (
-                                <Badge key={tag} variant="secondary" className="text-[9px] px-1.5 py-0 bg-gray-100 text-gray-600 border-0">
+                                <Badge key={tag} variant="secondary" className="text-[9px] px-1.5 py-0 bg-gray-100/80 text-gray-600 border-0 rounded-md">
                                   {tag}
                                 </Badge>
                               ))}
@@ -444,11 +447,11 @@ function TasksContent() {
                           )}
 
                           {/* Footer */}
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-100 ml-5.5">
+                          <div className="flex items-center justify-between pt-2.5 border-t border-gray-100 ml-5.5">
                             <div className="flex items-center gap-2">
                               {task.stylistName ? (
                                 <div className="flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold" style={{ backgroundColor: task.stylistColor || "#8b5cf6" }}>
+                                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[8px] font-bold shadow-sm" style={{ backgroundColor: task.stylistColor || "#8b5cf6" }}>
                                     {task.stylistName.split(" ").map((n: string) => n[0]).join("")}
                                   </div>
                                   <span className="text-[11px] text-gray-600 font-medium">{task.stylistName.split(" ")[0]}</span>
@@ -470,7 +473,7 @@ function TasksContent() {
                           </div>
 
                           {/* Quick Status Buttons */}
-                          <div className="flex items-center gap-1 mt-2 ml-5.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center gap-1 mt-2.5 ml-5.5 opacity-0 group-hover:opacity-100 transition-opacity">
                             {columns.filter((c) => c.id !== task.status).slice(0, 3).map((c) => (
                               <button
                                 key={c.id}
@@ -487,9 +490,9 @@ function TasksContent() {
                   })}
 
                   {columnTasks.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+                    <div className="flex flex-col items-center justify-center py-12 text-gray-300">
                       <Icon className="h-8 w-8 mb-2 opacity-40" />
-                      <p className="text-[12px]">No tasks</p>
+                      <p className="text-[12px] font-medium">No tasks</p>
                     </div>
                   )}
                 </div>

@@ -31,28 +31,28 @@ function LoginForm() {
         <button
           type="button"
           onClick={() => fillDemo("admin")}
-          className="flex-1 px-3 py-2 rounded-xl border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-sm cursor-pointer"
+          className="flex-1 px-3 py-2 rounded-lg border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-[13px] cursor-pointer"
         >
-          <span className="text-gray-400 text-xs font-medium">Demo: Admin</span>
+          <span className="text-gray-400 text-[11px] font-medium">Demo: Admin</span>
         </button>
         <button
           type="button"
           onClick={() => fillDemo("stylist")}
-          className="flex-1 px-3 py-2 rounded-xl border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-sm cursor-pointer"
+          className="flex-1 px-3 py-2 rounded-lg border border-dashed border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-all text-[13px] cursor-pointer"
         >
-          <span className="text-gray-400 text-xs font-medium">Demo: Stylist</span>
+          <span className="text-gray-400 text-[11px] font-medium">Demo: Stylist</span>
         </button>
       </div>
 
-      <form action={action} className="space-y-5">
+      <form action={action} className="space-y-4">
         {state?.message && (
-          <div className="px-4 py-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm font-medium">
+          <div className="px-3 py-2.5 rounded-lg bg-red-50 border border-red-100 text-red-600 text-[13px] font-medium">
             {state.message}
           </div>
         )}
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-normal text-gray-500 tracking-normal">
+          <label className="text-[11px] font-medium text-gray-500 tracking-wide">
             Email
           </label>
           <input
@@ -63,15 +63,15 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-white border-[1.5px] border-border-subtle rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-foreground-1 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-surface-1 placeholder:text-gray-400"
+            className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-[13px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-gray-400"
           />
           {state?.errors?.email && (
-            <p className="text-xs text-red-500 mt-0.5">{state.errors.email[0]}</p>
+            <p className="text-[12px] text-red-500 mt-0.5">{state.errors.email[0]}</p>
           )}
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-normal text-gray-500 tracking-normal">
+          <label className="text-[11px] font-medium text-gray-500 tracking-wide">
             Password
           </label>
           <div className="relative">
@@ -83,7 +83,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-white border-[1.5px] border-border-subtle rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-foreground-1 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-surface-1 placeholder:text-gray-400 pr-10"
+              className="w-full bg-white border border-gray-200 rounded-lg px-3.5 py-2.5 text-[13px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/10 placeholder:text-gray-400 pr-10"
             />
             <button
               type="button"
@@ -98,21 +98,21 @@ function LoginForm() {
             </button>
           </div>
           {state?.errors?.password && (
-            <p className="text-xs text-red-500 mt-0.5">{state.errors.password[0]}</p>
+            <p className="text-[12px] text-red-500 mt-0.5">{state.errors.password[0]}</p>
           )}
         </div>
 
         <button
           type="submit"
           disabled={pending}
-          className="w-full mt-4 py-3 text-base font-bold tracking-wide rounded-xl bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="w-full mt-2 py-2.5 text-[13px] font-semibold tracking-wide rounded-lg bg-primary text-white hover:bg-primary/90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {pending ? (
-            <Loader2 className="h-5 w-5 animate-spin mx-auto" />
+            <Loader2 className="h-4 w-4 animate-spin mx-auto" />
           ) : (
             <span className="inline-flex items-center gap-2">
               Sign In
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </span>
           )}
         </button>
@@ -141,42 +141,38 @@ export default function LoginPage() {
   const subDisplay = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Salon";
 
   return (
-    <div className="min-h-screen relative flex flex-col items-center justify-center bg-[#f8fafc] py-12">
-      {/* Decorative gradient blobs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-primary/25 via-primary/15 to-primary/10 blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-15%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-primary/20 via-primary/10 to-primary/5 blur-[120px]" />
-        <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-primary/10 to-primary/5 blur-[80px]" />
-      </div>
+    <div className="min-h-screen relative flex flex-col items-center justify-center py-12">
+      {/* Subtle background wash */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.03] via-transparent to-primary/[0.02]" />
 
       {/* Logo & brand */}
-      <div className="relative z-10 flex flex-col items-center mb-8 gap-4 transition-all duration-700 ease-out translate-y-0 opacity-100">
-        <div className="gradient-primary p-[3px] rounded-3xl shadow-lg shadow-primary/20">
-          <div className="bg-white rounded-[21px] p-1">
+      <div className="relative z-10 flex flex-col items-center mb-8 gap-3">
+        <div className="gradient-primary p-[2px] rounded-2xl">
+          <div className="bg-white rounded-[14px] p-0.5">
             {logo ? (
               <img
                 src={logo}
                 alt={`${salonName} Logo`}
-                className="h-16 w-16 rounded-[18px] object-cover"
+                className="h-14 w-14 rounded-[12px] object-cover"
               />
             ) : (
               <Image
                 src="/logo.jpeg"
                 alt={`${salonName} Logo`}
-                className="h-16 w-16 rounded-[18px] object-cover"
-                width={64}
-                height={64}
+                className="h-14 w-14 rounded-[12px] object-cover"
+                width={56}
+                height={56}
                 priority
               />
             )}
           </div>
         </div>
         <div className="text-center">
-          <span className="text-3xl font-black text-primary tracking-tight">
+          <span className="text-2xl font-bold text-primary tracking-tight">
             {displayName}
           </span>
           {nameParts.length > 1 && (
-            <span className="block text-lg font-semibold text-primary/60 tracking-wide">
+            <span className="block text-sm font-medium text-primary/50 tracking-wide">
               {subDisplay}
             </span>
           )}
@@ -185,19 +181,13 @@ export default function LoginPage() {
 
       {/* Login card */}
       <div className="relative z-10 w-full flex justify-center">
-        <div className="w-full max-w-md px-4">
-          <div
-            className="flex flex-col relative overflow-hidden border-none w-full p-8 rounded-[24px] bg-white/80 backdrop-blur-xl border border-white/60 ring-1 ring-primary/10"
-            style={{
-              boxShadow:
-                "0 10px 25px -5px color-mix(in srgb, var(--primary) 10%, transparent), 0 8px 10px -6px color-mix(in srgb, var(--primary) 5%, transparent)",
-            }}
-          >
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">
+        <div className="w-full max-w-sm px-4">
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200/60 rounded-xl p-6 shadow-sm">
+            <div className="text-center mb-6">
+              <h1 className="text-xl font-bold text-gray-900 mb-1">
                 Welcome Back
               </h1>
-              <p className="text-sm font-medium text-gray-500">
+              <p className="text-[13px] text-gray-500">
                 Please sign in to your account
               </p>
             </div>
@@ -205,7 +195,7 @@ export default function LoginPage() {
             <Suspense
               fallback={
                 <div className="flex items-center justify-center h-48">
-                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
                 </div>
               }
             >

@@ -238,46 +238,45 @@ export function Header() {
       case "reminder":
         return <Clock className="h-4 w-4 text-amber-500" />;
       default:
-        return <AlertCircle className="h-4 w-4 text-gray-500" />;
+        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-4 px-6 py-3 bg-white/80 backdrop-blur-xl border-b border-gray-100">
-      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-primary via-primary/50 to-primary/30 opacity-60" />
+    <header className="sticky top-0 z-30 flex items-center gap-4 px-6 h-12 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
         <div className="relative" ref={dropdownRef}>
           <Button
             variant="ghost"
-            size="icon"
-            className="relative text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-xl"
+            size="icon-sm"
+            className="relative text-muted-foreground hover:text-foreground rounded-lg"
             onClick={() => {
               const willOpen = !showNotifications;
               setShowNotifications(willOpen);
               if (willOpen) markAllAsRead();
             }}
           >
-            <Bell className="h-5 w-5" />
+            <Bell className="h-4 w-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-primary rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-[16px] bg-primary rounded-full text-[9px] text-primary-foreground flex items-center justify-center font-bold px-1">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </Button>
 
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                <h3 className="font-semibold text-[14px] text-gray-900">Notifications</h3>
+            <div className="absolute right-0 top-full mt-2 w-80 bg-card rounded-xl shadow-premium-lg border border-border overflow-hidden z-50 animate-scale-in">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+                <h3 className="font-semibold text-[13px] text-foreground">Notifications</h3>
                 {unreadCount > 0 && (
-                  <span className="text-[12px] text-primary font-medium">{unreadCount} new</span>
+                  <span className="text-[11px] text-primary font-medium">{unreadCount} new</span>
                 )}
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-6 text-center text-gray-400 text-[13px]">
+                  <div className="p-6 text-center text-muted-foreground text-[13px]">
                     No notifications
                   </div>
                 ) : (
@@ -285,8 +284,8 @@ export function Header() {
                     <div
                       key={notification.id}
                       onClick={() => handleNotificationClick(notification)}
-                      className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0 cursor-pointer group ${
-                        !notification.read ? "bg-primary/5" : ""
+                      className={`flex items-start gap-3 px-4 py-3 hover:bg-accent/50 transition-colors border-b border-border/30 last:border-0 cursor-pointer group ${
+                        !notification.read ? "bg-primary/[0.03]" : ""
                       }`}
                     >
                       <div className="mt-0.5 shrink-0">
@@ -294,27 +293,27 @@ export function Header() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className={`text-[13px] ${!notification.read ? "font-bold text-gray-900" : "font-semibold text-gray-700"}`}>
+                          <p className={`text-[13px] ${!notification.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"}`}>
                             {notification.title}
                           </p>
                           {!notification.read && (
-                            <span className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
                           )}
                         </div>
-                        <p className="text-[12px] text-gray-500 truncate">{notification.message}</p>
-                        <p className="text-[11px] text-gray-400 mt-0.5">{notification.time}</p>
+                        <p className="text-[12px] text-muted-foreground truncate">{notification.message}</p>
+                        <p className="text-[11px] text-muted-foreground/60 mt-0.5">{notification.time}</p>
                       </div>
                       <button
                         onClick={(e) => deleteNotification(e, notification.id)}
-                        className="shrink-0 mt-0.5 p-1 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                        className="shrink-0 mt-0.5 p-1 rounded-md text-muted-foreground/30 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   ))
                 )}
               </div>
-              <div className="px-4 py-2 border-t border-gray-100">
+              <div className="px-4 py-2.5 border-t border-border/50">
                 <button
                   onClick={() => {
                     router.push("/appointments");
@@ -329,9 +328,9 @@ export function Header() {
           )}
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 text-sm border border-gray-100">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-dot" />
-          <span className="text-gray-500 text-xs font-medium">Online</span>
+        <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/50 border border-border/50">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-dot" />
+          <span className="text-muted-foreground text-[11px] font-medium">Online</span>
         </div>
       </div>
     </header>
