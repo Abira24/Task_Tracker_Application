@@ -13,7 +13,9 @@ import {
   Clock,
   Star,
   Download,
+  FileSpreadsheet,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   Card,
   CardContent,
@@ -39,20 +41,54 @@ export default function AnalyticsPage() {
 
   const exportReport = () => {
     if (!data) return;
-    const report = {
-      generatedAt: new Date().toISOString(),
-      kpis: data.kpis,
-      revenueData: data.revenueData,
-      serviceBreakdown: data.serviceBreakdown,
-      topStylists: data.topStylists,
-    };
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    const wb = XLSX.utils.book_new();
+
+    if (data.kpis) {
+      const kpiData = [
+        { Metric: "Total Revenue", Value: `$${data.kpis.totalRevenue?.toLocaleString() || 0}` },
+        { Metric: "Total Appointments", Value: data.kpis.totalAppointments || 0 },
+        { Metric: "Total Customers", Value: data.kpis.totalCustomers || 0 },
+        { Metric: "Avg Revenue/Appointment", Value: `$${data.kpis.avgRevenuePerAppointment?.toFixed(2) || 0}` },
+      ];
+      const ws = XLSX.utils.json_to_sheet(kpiData);
+      ws["!cols"] = [{ wch: 25 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, ws, "KPIs");
+    }
+
+    if (data.revenueData?.length) {
+      const ws = XLSX.utils.json_to_sheet(data.revenueData.map((r: any) => ({
+        Month: r.month,
+        Revenue: r.revenue,
+        Appointments: r.appointments,
+      })));
+      ws["!cols"] = [{ wch: 15 }, { wch: 12 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws, "Revenue");
+    }
+
+    if (data.serviceBreakdown?.length) {
+      const ws = XLSX.utils.json_to_sheet(data.serviceBreakdown.map((s: any) => ({
+        Service: s.name,
+        Count: s.count,
+        Revenue: s.revenue,
+      })));
+      ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 12 }];
+      XLSX.utils.book_append_sheet(wb, ws, "Services");
+    }
+
+    if (data.topStylists?.length) {
+      const ws = XLSX.utils.json_to_sheet(data.topStylists.map((s: any) => ({
+        Stylist: s.name,
+        Appointments: s.appointments,
+        Revenue: s.revenue,
+        Rating: s.rating,
+      })));
+      ws["!cols"] = [{ wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 10 }];
+      XLSX.utils.book_append_sheet(wb, ws, "Stylists");
+    }
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    XLSX.writeFile(wb, `analytics-report-${dateStr}.xlsx`);
   };
 
   if (loading) {
@@ -83,7 +119,7 @@ export default function AnalyticsPage() {
             {selectedMonth || "This Month"}
           </Button>
           <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50" onClick={exportReport}>
-            <Download className="h-4 w-4 mr-1" /> Export Report
+            <FileSpreadsheet className="h-4 w-4 mr-1" /> Export Excel
           </Button>
         </div>
       </div>

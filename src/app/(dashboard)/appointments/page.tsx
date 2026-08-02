@@ -74,15 +74,13 @@ function to24h(time: string) {
 }
 
 function toDateStr(d: Date) {
-  return d.toISOString().split("T")[0];
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatSelectedDate(d: Date) {
-  const today = new Date();
-  if (toDateStr(d) === toDateStr(today)) return "Today";
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  if (toDateStr(d) === toDateStr(yesterday)) return "Yesterday";
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
 }
 
@@ -108,7 +106,7 @@ function AppointmentsContent() {
 
   const [createForm, setCreateForm] = useState({
     customerId: "", serviceId: "", stylistId: "",
-    date: new Date().toISOString().split("T")[0],
+    date: toDateStr(new Date()),
     startTime: "09:00", endTime: "10:00",
   });
 
@@ -128,6 +126,11 @@ function AppointmentsContent() {
   useEffect(() => {
     setSearchTerm(urlSearch);
   }, [urlSearch]);
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const isViewingToday = toDateStr(selectedDate) === toDateStr(now);
 
   const today = new Date();
   const weekStart = new Date(today);
@@ -149,7 +152,7 @@ function AppointmentsContent() {
     clientEmail: a.clientEmail,
     clientPhone: a.clientPhone,
     service: a.service,
-    date: a.date ? new Date(a.date).toISOString().split("T")[0] : "",
+    date: a.date ? toDateStr(new Date(a.date)) : "",
     time: a.startTime,
     endTime: a.endTime,
     stylist: a.stylist,
@@ -423,12 +426,12 @@ function AppointmentsContent() {
       {view === "calendar" ? (
         <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
           <CardContent className="p-0">
-            <div className="grid grid-cols-1 lg:grid-cols-[80px_1fr]">
+            <div className="grid grid-cols-1 lg:grid-cols-[72px_1fr]">
               {/* Time labels */}
               <div className="hidden lg:flex flex-col border-r border-gray-100">
-                <div className="h-14 border-b border-gray-100 bg-gray-50/50" />
-                {timeSlots.map((time) => (
-                  <div key={time} className="h-16 flex items-start px-3 pt-1 text-[11px] text-gray-400 font-medium border-b border-gray-50">
+                <div className="h-12 border-b border-gray-100 bg-gray-50/80" />
+                {timeSlots.map((time, i) => (
+                  <div key={time} className={`h-14 flex items-start px-2 pt-1.5 text-[11px] font-medium ${i % 2 === 0 ? "text-gray-500" : "text-gray-300"}`}>
                     {time}
                   </div>
                 ))}
@@ -436,54 +439,91 @@ function AppointmentsContent() {
 
               {/* Stylist columns */}
               <div className="overflow-x-auto">
-                <div className={`grid gap-0 ${displayStylists.length <= 4 ? `grid-cols-${displayStylists.length}` : "grid-cols-4"}`} style={{ minWidth: displayStylists.length * 200 }}>
-                  {displayStylists.map((stylist: any) => (
-                    <div key={stylist.id} className="border-r border-gray-100 last:border-r-0">
-                      {/* Stylist header */}
-                      <div className="h-14 flex items-center gap-2 px-3 border-b border-gray-100 bg-gray-50/50 sticky top-0">
-                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: stylist.color }} />
-                        <span className="font-semibold text-[13px] text-gray-900 truncate">{stylist.name}</span>
-                        <Badge variant="secondary" className="ml-auto text-[10px] bg-gray-100 text-gray-500">
-                          {dayAppointments.filter((a) => a.stylist === stylist.name).length}
-                        </Badge>
-                      </div>
+                <div className="flex" style={{ minWidth: displayStylists.length * 220 }}>
+                  {displayStylists.map((stylist: any, si: number) => {
+                    const stylistAppts = filteredAppointments.filter((a: any) => a.stylist === stylist.name && a.date === selectedDateStr);
+                    return (
+                      <div key={stylist.id} className={`flex-1 min-w-[220px] ${si < displayStylists.length - 1 ? "border-r border-gray-100" : ""}`}>
+                        {/* Stylist header */}
+                        <div className="h-12 flex items-center gap-2.5 px-3 border-b border-gray-100 bg-gray-50/80 sticky top-0 z-10">
+                          <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: stylist.color }} />
+                          <span className="font-semibold text-[13px] text-gray-800 truncate">{stylist.name}</span>
+                          <span className="ml-auto text-[10px] font-medium text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
+                            {stylistAppts.length}
+                          </span>
+                        </div>
 
-                      {/* Time grid */}
-                      <div className="relative">
-                        {timeSlots.map((time) => (
-                          <div key={time} className="h-16 border-b border-gray-50 hover:bg-gray-50/50 transition-colors" />
-                        ))}
+                        {/* Time grid */}
+                        <div className="relative">
+                          {timeSlots.map((time, i) => (
+                            <div key={time} className={`h-14 border-b ${i % 2 === 0 ? "border-gray-100" : "border-gray-50"} hover:bg-primary/[0.02] transition-colors`}>
+                              {/* Half-hour marker */}
+                              <div className="w-full h-px bg-gray-50 mt-7" />
+                            </div>
+                          ))}
+
+                          {/* Current time indicator */}
+                          {isViewingToday && si === 0 && (() => {
+                            const slotIdx = timeSlots.findIndex((t) => {
+                              const t24 = to24h(t);
+                              const [th, tm] = t24.split(":").map(Number);
+                              return currentHour < th || (currentHour === th && currentMinute < tm);
+                            });
+                            if (slotIdx === -1 && currentHour >= 17) return null;
+                            const idx = slotIdx === -1 ? timeSlots.length - 1 : slotIdx;
+                            const t24 = to24h(timeSlots[Math.max(0, idx)]);
+                            const [th, tm] = t24.split(":").map(Number);
+                            const offset = idx * 56 + ((currentMinute / 60) * 56);
+                            return (
+                              <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top: `${offset}px` }}>
+                                <div className="flex items-center">
+                                  <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0" />
+                                  <div className="flex-1 h-px bg-red-400" />
+                                </div>
+                              </div>
+                            );
+                          })()}
 
                         {/* Appointments */}
-                        {mappedAppointments
-                          .filter((a: any) => a.stylist === stylist.name && a.date === selectedDateStr)
-                          .map((apt: any) => {
+                        {stylistAppts.map((apt: any) => {
                             const startIdx = timeSlots.indexOf(apt.time);
                             const endIdx = timeSlots.indexOf(apt.endTime);
-                            const duration = endIdx - startIdx + 1;
+                            const duration = Math.max(endIdx - startIdx + 1, 1);
                             if (startIdx === -1) return null;
+                            const statusColors: Record<string, string> = {
+                              confirmed: "border-l-emerald-400 bg-emerald-50/80",
+                              "in-progress": "border-l-sky-400 bg-sky-50/80",
+                              pending: "border-l-amber-400 bg-amber-50/80",
+                              completed: "border-l-primary bg-primary-50/80",
+                              cancelled: "border-l-red-300 bg-red-50/60",
+                            };
                             return (
                               <div
                                 key={apt.id}
                                 onClick={() => openDetailDialog(apt)}
-                                className="absolute left-1 right-1 rounded-lg p-2 border-l-[3px] bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 transition-all cursor-pointer overflow-hidden group"
+                                className={`absolute left-1.5 right-1.5 rounded-lg p-2 border-l-[3px] shadow-sm hover:shadow-md transition-all cursor-pointer overflow-hidden group ${statusColors[apt.status] || "border-l-gray-300 bg-gray-50"}`}
                                 style={{
-                                  top: `${startIdx * 64}px`,
-                                  height: `${Math.max(duration * 64 - 4, 32)}px`,
-                                  borderLeftColor: stylist.color,
+                                  top: `${startIdx * 56 + 2}px`,
+                                  height: `${Math.max(duration * 56 - 6, 28)}px`,
                                 }}
                               >
-                                <p className="text-[11px] font-bold text-gray-900 truncate">{apt.client}</p>
-                                <p className="text-[10px] text-gray-500 truncate">{apt.service}</p>
+                                <div className="flex items-center justify-between gap-1">
+                                  <p className="text-[11px] font-bold text-gray-900 truncate">{apt.client}</p>
+                                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${statusConfig[apt.status]?.dot || "bg-gray-400"}`} />
+                                </div>
+                                <p className="text-[10px] text-gray-500 truncate mt-0.5">{apt.service}</p>
                                 {duration > 1 && (
-                                  <p className="text-[10px] text-gray-400 mt-0.5">{apt.time}</p>
+                                  <p className="text-[9px] text-gray-400 mt-1 flex items-center gap-0.5">
+                                    <Clock className="h-2.5 w-2.5" /> {apt.time} – {apt.endTime}
+                                  </p>
                                 )}
                               </div>
                             );
                           })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

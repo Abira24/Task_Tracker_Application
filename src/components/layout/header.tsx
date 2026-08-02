@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, X, Calendar, CheckCircle2, Clock, AlertCircle, Trash2 } from "lucide-react";
+import { Bell, X, Calendar, CheckCircle2, Clock, AlertCircle, Trash2, Package } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
@@ -39,15 +39,18 @@ export function Header() {
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/appointments");
+      if (!res.ok) return;
       const data = await res.json();
       const appointments = data.appointments || [];
 
       const readIds = getStoredSet("notification_read");
       const deletedIds = getStoredSet("notification_deleted");
 
-      const today = new Date().toISOString().split("T")[0];
+      const todayNow = new Date();
+      const today = `${todayNow.getFullYear()}-${String(todayNow.getMonth() + 1).padStart(2, "0")}-${String(todayNow.getDate()).padStart(2, "0")}`;
       const todayAppts = appointments.filter((a: any) => {
-        const apptDate = new Date(a.date).toISOString().split("T")[0];
+        const d = new Date(a.date);
+        const apptDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
         return apptDate === today;
       });
 
@@ -145,6 +148,30 @@ export function Header() {
         });
       }
 
+      try {
+        const invRes = await fetch("/api/inventory");
+        if (invRes.ok) {
+          const invData = await invRes.json();
+          const invItems = invData.items || [];
+          const lowStock = invItems.filter((i: any) => i.stock <= i.minStock);
+          lowStock.forEach((item: any) => {
+            const id = `low-stock-${item.id}`;
+            if (!deletedIds.has(id)) {
+              const isOut = item.stock === 0;
+              newNotifications.push({
+                id,
+                type: "status_change",
+                title: isOut ? "Out of Stock" : "Low Stock",
+                message: `${item.name} — ${item.stock} left (min: ${item.minStock})`,
+                time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+                read: readIds.has(id),
+                deleted: false,
+              });
+            }
+          });
+        }
+      } catch {}
+
       setNotifications(newNotifications);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
@@ -201,7 +228,8 @@ export function Header() {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: string, title: string) => {
+    if (title === "Low Stock" || title === "Out of Stock") return <Package className="h-4 w-4 text-amber-500" />;
     switch (type) {
       case "appointment_today":
         return <Calendar className="h-4 w-4 text-primary" />;
@@ -262,7 +290,7 @@ export function Header() {
                       }`}
                     >
                       <div className="mt-0.5 shrink-0">
-                        {getNotificationIcon(notification.type)}
+                        {getNotificationIcon(notification.type, notification.title)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">

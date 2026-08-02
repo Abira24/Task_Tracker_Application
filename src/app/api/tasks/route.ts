@@ -4,21 +4,15 @@ import { query } from "@/lib/db";
 export async function GET() {
   try {
     const tasks = await query<any[]>(
-      `SELECT t.*, u.name as assignee, u.id as userId
-       FROM Task t LEFT JOIN User u ON t.userId = u.id
+      `SELECT t.*, u.name as assignee, u.id as userId, st.name as stylistName, st.id as stylistId, st.color as stylistColor
+       FROM Task t LEFT JOIN User u ON t.userId = u.id LEFT JOIN Stylist st ON t.stylistId = st.id
        ORDER BY FIELD(t.status, 'todo', 'in-progress', 'review', 'done'), t.createdAt DESC`
     );
 
     const mapped = tasks.map((t: any) => {
-      let dueDateStr = t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
-      const now = new Date();
-      const due = t.dueDate ? new Date(t.dueDate) : null;
-      if (due) {
-        const diff = Math.floor((due.getTime() - now.getTime()) / 86400000);
-        if (diff === 0) dueDateStr = "Today";
-        else if (diff === 1) dueDateStr = "Tomorrow";
-        else if (diff === -1) dueDateStr = "Yesterday";
-      }
+      const dueDateStr = t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "";
+
+      const dueDateRaw = t.dueDate ? (() => { const d = new Date(t.dueDate); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })() : "";
 
       return {
         id: t.id,
@@ -27,7 +21,11 @@ export async function GET() {
         priority: t.priority,
         status: t.status,
         assignee: t.assignee || "Unassigned",
+        stylistId: t.stylistId || null,
+        stylistName: t.stylistName || null,
+        stylistColor: t.stylistColor || null,
         dueDate: dueDateStr,
+        dueDateRaw,
         tags: t.tags ? JSON.parse(t.tags) : [],
         comments: 0,
         attachments: 0,
@@ -53,11 +51,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, priority, status, dueDate, tags, userId } = body;
+    const { title, description, priority, status, dueDate, tags, userId, stylistId } = body;
     const id = `task_${Date.now()}`;
     await query(
-      "INSERT INTO Task (id, title, description, priority, status, dueDate, tags, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-      [id, title, description || null, priority || "medium", status || "todo", dueDate ? new Date(dueDate) : null, tags ? JSON.stringify(tags) : null, userId || null]
+      "INSERT INTO Task (id, title, description, priority, status, dueDate, tags, userId, stylistId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, title, description || null, priority || "medium", status || "todo", dueDate ? new Date(dueDate) : null, tags ? JSON.stringify(tags) : null, userId || null, stylistId || null]
     );
     return NextResponse.json({ id, success: true });
   } catch (error) {

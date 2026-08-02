@@ -98,7 +98,9 @@ async function main() {
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         userId VARCHAR(255) NULL,
-        FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL
+        stylistId VARCHAR(255) NULL,
+        FOREIGN KEY (userId) REFERENCES User(id) ON DELETE SET NULL,
+        FOREIGN KEY (stylistId) REFERENCES Stylist(id) ON DELETE SET NULL
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 

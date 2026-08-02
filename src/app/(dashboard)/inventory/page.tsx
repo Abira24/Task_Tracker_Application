@@ -15,7 +15,9 @@ import {
   Eye,
   ArrowUpDown,
   Loader2,
+  FileSpreadsheet,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   Card,
   CardContent,
@@ -48,6 +50,7 @@ function InventoryContent() {
   const [stats, setStats] = useState<any>({});
   const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [loading, setLoading] = useState(true);
+  const [dismissedCritical, setDismissedCritical] = useState<Set<string>>(new Set());
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -78,6 +81,9 @@ function InventoryContent() {
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const criticalItems = items.filter((item) => item.stock <= item.minStock && !dismissedCritical.has(item.id));
+  const hasCritical = criticalItems.length > 0;
 
   const createItem = async () => {
     setFormSubmitting(true);
@@ -155,17 +161,26 @@ function InventoryContent() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
-            const csv = ["Name,Category,Stock,Min Stock,Price,Supplier,Status"];
-            items.forEach((item) => csv.push(`${item.name},${item.category},${item.stock},${item.minStock},${item.price},${item.supplier || ""},${item.status}`));
-            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `inventory-report-${new Date().toISOString().split("T")[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            const data = items.map((item) => ({
+              "Product Name": item.name,
+              Category: item.category,
+              Stock: item.stock,
+              "Min Stock": item.minStock,
+              Price: item.price,
+              Supplier: item.supplier || "",
+              Status: item.status === "in-stock" ? "In Stock" : item.status === "low-stock" ? "Low Stock" : item.status === "critical" ? "Critical" : "Out of Stock",
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            ws["!cols"] = [
+              { wch: 25 }, { wch: 15 }, { wch: 8 }, { wch: 10 }, { wch: 10 }, { wch: 20 }, { wch: 12 },
+            ];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+            XLSX.writeFile(wb, `inventory-report-${dateStr}.xlsx`);
           }}>
-            <BarChart3 className="h-4 w-4" /> Reports
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel
           </Button>
           <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
             <Plus className="h-4 w-4" /> Add Item
@@ -193,6 +208,57 @@ function InventoryContent() {
           </Card>
         ))}
       </div>
+
+      {hasCritical && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-red-100 shrink-0">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-[14px] text-red-800">
+                  Low Stock Alert — {criticalItems.length} {criticalItems.length === 1 ? "item" : "items"} need attention
+                </h3>
+                <button
+                  onClick={() => setDismissedCritical(new Set(criticalItems.map((i) => i.id)))}
+                  className="text-[12px] text-red-500 hover:text-red-700 font-medium cursor-pointer shrink-0"
+                >
+                  Dismiss all
+                </button>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                {criticalItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-red-100"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center shrink-0">
+                      <Package className="h-4 w-4 text-red-500" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-[12px] text-gray-900 truncate">{item.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-[11px] font-bold ${item.stock === 0 ? "text-red-600" : "text-amber-600"}`}>
+                          {item.stock} left
+                        </span>
+                        <span className="text-[10px] text-gray-400">min: {item.minStock}</span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setDismissedCritical((prev) => new Set([...prev, item.id]))}
+                      className="text-gray-300 hover:text-gray-500 cursor-pointer shrink-0"
+                    >
+                      <span className="sr-only">Dismiss</span>
+                      <span className="text-[16px] leading-none">&times;</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const values: any[] = [];
 
     for (const [key, value] of Object.entries(body)) {
-      if (["title", "description", "priority", "status", "dueDate", "tags", "userId"].includes(key)) {
+      if (["title", "description", "priority", "status", "dueDate", "tags", "userId", "stylistId"].includes(key)) {
         fields.push(`${key}=?`);
         values.push(key === "dueDate" && value ? new Date(value as string) : value);
       }

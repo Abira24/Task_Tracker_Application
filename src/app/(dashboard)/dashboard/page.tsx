@@ -57,7 +57,7 @@ export default function DashboardPage() {
   const [services, setServices] = useState<any[]>([]);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
-  const [apptForm, setApptForm] = useState({ customerId: "", serviceId: "", stylistId: "", date: new Date().toISOString().split("T")[0], startTime: "09:00", endTime: "10:00" });
+  const [apptForm, setApptForm] = useState(() => { const d = new Date(); return { customerId: "", serviceId: "", stylistId: "", date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`, startTime: "09:00", endTime: "10:00" }; });
   const [custForm, setCustForm] = useState({ name: "", email: "", phone: "" });
   const [svcForm, setSvcForm] = useState({ name: "", category: "Cut", duration: "30", price: "" });
 

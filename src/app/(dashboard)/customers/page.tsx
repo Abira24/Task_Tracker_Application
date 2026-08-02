@@ -14,7 +14,9 @@ import {
   Trash2,
   X,
   Loader2,
+  FileSpreadsheet,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import {
   Card,
   CardContent,
@@ -157,17 +159,26 @@ function CustomersContent() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
-            const csv = ["Name,Email,Phone,Status,Visits,Total Spent,Last Visit"];
-            customers.forEach((c) => csv.push(`${c.name},${c.email},${c.phone || ""},${c.status},${c.visits},${c.totalSpent},${c.lastVisit}`));
-            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `customers-export-${new Date().toISOString().split("T")[0]}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
+            const data = customers.map((c) => ({
+              Name: c.name,
+              Email: c.email,
+              Phone: c.phone || "",
+              Status: c.status,
+              Visits: c.visits,
+              "Total Spent": c.totalSpent,
+              "Last Visit": c.lastVisit,
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            ws["!cols"] = [
+              { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 14 },
+            ];
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Customers");
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+            XLSX.writeFile(wb, `customers-export-${dateStr}.xlsx`);
           }}>
-            <Download className="h-4 w-4" /> Export
+            <FileSpreadsheet className="h-4 w-4" /> Export Excel
           </Button>
           <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
             <UserPlus className="h-4 w-4" /> Add Customer
