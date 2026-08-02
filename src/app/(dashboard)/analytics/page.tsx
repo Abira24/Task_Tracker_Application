@@ -2,34 +2,34 @@
 
 import { useState, useEffect } from "react";
 import {
-  TrendingUp,
   DollarSign,
-  Users,
   Calendar,
-  Scissors,
-  BarChart3,
-  ArrowUpRight,
-  ArrowDownRight,
+  Users,
   Clock,
-  Star,
-  Download,
+  TrendingUp,
   FileSpreadsheet,
+  Scissors,
+  User,
+  Loader2,
+  BarChart3,
+  Package,
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-export default function AnalyticsPage() {
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  confirmed: { label: "Confirmed", color: "text-emerald-600", bg: "bg-emerald-50" },
+  "in-progress": { label: "In Progress", color: "text-sky-600", bg: "bg-sky-50" },
+  pending: { label: "Pending", color: "text-amber-600", bg: "bg-amber-50" },
+  completed: { label: "Completed", color: "text-primary", bg: "bg-primary-50" },
+  cancelled: { label: "Cancelled", color: "text-red-600", bg: "bg-red-50" },
+};
+
+export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     fetch("/api/analytics")
@@ -39,67 +39,77 @@ export default function AnalyticsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const exportReport = () => {
-    if (!data) return;
-    const wb = XLSX.utils.book_new();
+  const exportDailySummary = () => {
+    if (!data?.daily) return;
+    setExporting(true);
+    try {
+      const d = data.daily;
+      const wb = XLSX.utils.book_new();
 
-    if (data.kpis) {
-      const kpiData = [
-        { Metric: "Total Revenue", Value: `$${data.kpis.totalRevenue?.toLocaleString() || 0}` },
-        { Metric: "Total Appointments", Value: data.kpis.totalAppointments || 0 },
-        { Metric: "Total Customers", Value: data.kpis.totalCustomers || 0 },
-        { Metric: "Avg Revenue/Appointment", Value: `$${data.kpis.avgRevenuePerAppointment?.toFixed(2) || 0}` },
+      const summaryData = [
+        { Metric: "Date", Value: d.date },
+        { Metric: "Revenue", Value: `$${d.revenue.toLocaleString()}` },
+        { Metric: "Total Appointments", Value: d.appointmentsCount },
+        { Metric: "Confirmed", Value: d.statusCounts?.confirmed || 0 },
+        { Metric: "In Progress", Value: d.statusCounts?.["in-progress"] || 0 },
+        { Metric: "Pending", Value: d.statusCounts?.pending || 0 },
+        { Metric: "Completed", Value: d.statusCounts?.completed || 0 },
+        { Metric: "Cancelled", Value: d.statusCounts?.cancelled || 0 },
       ];
-      const ws = XLSX.utils.json_to_sheet(kpiData);
-      ws["!cols"] = [{ wch: 25 }, { wch: 20 }];
-      XLSX.utils.book_append_sheet(wb, ws, "KPIs");
-    }
+      const ws1 = XLSX.utils.json_to_sheet(summaryData);
+      ws1["!cols"] = [{ wch: 22 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, ws1, "Summary");
 
-    if (data.revenueData?.length) {
-      const ws = XLSX.utils.json_to_sheet(data.revenueData.map((r: any) => ({
-        Month: r.month,
-        Revenue: r.revenue,
-        Appointments: r.appointments,
-      })));
-      ws["!cols"] = [{ wch: 15 }, { wch: 12 }, { wch: 14 }];
-      XLSX.utils.book_append_sheet(wb, ws, "Revenue");
-    }
+      if (d.appointments?.length) {
+        const ws2 = XLSX.utils.json_to_sheet(d.appointments.map((a: any) => ({
+          Client: a.client,
+          Service: a.service,
+          Stylist: a.stylist,
+          Start: a.startTime,
+          End: a.endTime,
+          Status: statusConfig[a.status]?.label || a.status,
+          Price: `$${a.price || 0}`,
+        })));
+        ws2["!cols"] = [{ wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 12 }, { wch: 12 }, { wch: 14 }, { wch: 10 }];
+        XLSX.utils.book_append_sheet(wb, ws2, "Appointments");
+      }
 
-    if (data.serviceBreakdown?.length) {
-      const ws = XLSX.utils.json_to_sheet(data.serviceBreakdown.map((s: any) => ({
-        Service: s.name,
-        Count: s.count,
-        Revenue: s.revenue,
-      })));
-      ws["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, ws, "Services");
-    }
+      if (d.stylistPerformance?.length) {
+        const ws3 = XLSX.utils.json_to_sheet(d.stylistPerformance.map((s: any) => ({
+          Stylist: s.name,
+          Appointments: s.appointments,
+          Revenue: `$${s.revenue.toLocaleString()}`,
+        })));
+        ws3["!cols"] = [{ wch: 18 }, { wch: 14 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(wb, ws3, "Stylists");
+      }
 
-    if (data.topStylists?.length) {
-      const ws = XLSX.utils.json_to_sheet(data.topStylists.map((s: any) => ({
-        Stylist: s.name,
-        Appointments: s.appointments,
-        Revenue: s.revenue,
-        Rating: s.rating,
-      })));
-      ws["!cols"] = [{ wch: 20 }, { wch: 14 }, { wch: 12 }, { wch: 10 }];
-      XLSX.utils.book_append_sheet(wb, ws, "Stylists");
-    }
+      if (d.serviceBreakdown?.length) {
+        const ws4 = XLSX.utils.json_to_sheet(d.serviceBreakdown.map((s: any) => ({
+          Service: s.name,
+          Count: s.count,
+          Revenue: `$${s.revenue.toLocaleString()}`,
+        })));
+        ws4["!cols"] = [{ wch: 22 }, { wch: 10 }, { wch: 12 }];
+        XLSX.utils.book_append_sheet(wb, ws4, "Services");
+      }
 
-    const now = new Date();
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-    XLSX.writeFile(wb, `analytics-report-${dateStr}.xlsx`);
+      XLSX.writeFile(wb, `daily-summary-${d.date}.xlsx`);
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  const kpis = data?.kpis || [];
+  const daily = data?.daily;
+  const totals = data?.totals;
   const revenueData = data?.revenueData || [];
   const serviceBreakdown = data?.serviceBreakdown || [];
   const peakHours = data?.peakHours || [];
@@ -107,80 +117,213 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Analytics</h1>
-          <p className="text-gray-500">
-            Business insights and performance metrics
-          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Reports</h1>
+          <p className="text-gray-500 text-[13px]">Business insights and daily operations</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50" onClick={() => setSelectedMonth(selectedMonth ? null : new Date().toLocaleString("en", { month: "short" }))}>
-            {selectedMonth || "This Month"}
-          </Button>
-          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50" onClick={exportReport}>
-            <FileSpreadsheet className="h-4 w-4 mr-1" /> Export Excel
-          </Button>
-        </div>
+        <Button
+          onClick={exportDailySummary}
+          disabled={exporting || !daily}
+          className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20"
+        >
+          {exporting ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <FileSpreadsheet className="h-4 w-4 mr-1.5" />}
+          Export Daily Summary
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi: any) => (
-          <Card key={kpi.title} className="border-gray-100 shadow-sm rounded-xl">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-[13px] text-gray-500">{kpi.title}</p>
-                  <p className="text-3xl font-bold mt-1 text-gray-900">{kpi.value}</p>
-                  <div className="flex items-center gap-1 mt-2">
-                    {kpi.trend === "up" ? (
-                      <ArrowUpRight className="h-4 w-4 text-emerald-500" />
-                    ) : (
-                      <ArrowDownRight className="h-4 w-4 text-red-500" />
-                    )}
-                    <span className={`text-[13px] font-medium ${kpi.trend === "up" ? "text-emerald-500" : "text-red-500"}`}>
-                      {kpi.change}
-                    </span>
-                    <span className="text-[12px] text-gray-500">vs last month</span>
-                  </div>
+      {/* Daily Summary */}
+      {daily && (
+        <Card className="border-gray-100 shadow-sm rounded-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-primary via-purple-500 to-fuchsia-500 px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-white font-semibold text-[16px]">Today&apos;s Summary</h2>
+                <p className="text-white/70 text-[13px]">
+                  {new Date(daily.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 bg-white/20 rounded-xl px-4 py-2">
+                <DollarSign className="h-5 w-5 text-white" />
+                <span className="text-white font-bold text-xl">${daily.revenue.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+          <CardContent className="p-6">
+            {/* Status cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+              {[
+                { label: "Total", value: daily.appointmentsCount, bg: "bg-gray-100", text: "text-gray-700" },
+                { label: "Confirmed", value: daily.statusCounts?.confirmed || 0, bg: "bg-emerald-50", text: "text-emerald-700" },
+                { label: "In Progress", value: daily.statusCounts?.["in-progress"] || 0, bg: "bg-sky-50", text: "text-sky-700" },
+                { label: "Completed", value: daily.statusCounts?.completed || 0, bg: "bg-primary-50", text: "text-primary-700" },
+                { label: "Pending", value: daily.statusCounts?.pending || 0, bg: "bg-amber-50", text: "text-amber-700" },
+              ].map((s) => (
+                <div key={s.label} className={`flex items-center gap-3 p-3 rounded-xl ${s.bg}`}>
+                  <p className={`text-2xl font-bold ${s.text}`}>{s.value}</p>
+                  <p className={`text-[11px] font-medium ${s.text}`}>{s.label}</p>
                 </div>
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-50">
-                  {kpi.title?.includes("Revenue") && <DollarSign className="h-6 w-6 text-primary" />}
-                  {kpi.title?.includes("Appointments") && <Calendar className="h-6 w-6 text-sky-600" />}
-                  {kpi.title?.includes("Customers") && <Users className="h-6 w-6 text-emerald-600" />}
-                  {kpi.title?.includes("Rating") && <Star className="h-6 w-6 text-amber-600" />}
+              ))}
+            </div>
+
+            {/* Today's appointments */}
+            {daily.appointments?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-[14px] text-gray-900 mb-3 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-primary" /> Appointments
+                </h3>
+                <div className="space-y-2">
+                  {daily.appointments.map((apt: any) => {
+                    const st = statusConfig[apt.status] || statusConfig.pending;
+                    return (
+                      <div key={apt.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <div
+                          className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-[11px] shrink-0"
+                          style={{ backgroundColor: apt.stylistColor || "#8b5cf6" }}
+                        >
+                          {apt.startTime?.split(" ")[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-[13px] text-gray-900">{apt.client}</p>
+                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${st.bg} ${st.color}`}>
+                              {st.label}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-gray-500 mt-0.5">
+                            <span className="flex items-center gap-1"><Scissors className="h-3 w-3" /> {apt.service}</span>
+                            <span className="flex items-center gap-1"><User className="h-3 w-3" /> {apt.stylist}</span>
+                            <span>{apt.startTime} – {apt.endTime}</span>
+                          </div>
+                        </div>
+                        <span className="font-semibold text-[13px] text-gray-900 shrink-0">${apt.price || 0}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            )}
+
+            {daily.appointments?.length === 0 && (
+              <div className="text-center py-8 text-gray-400">
+                <Calendar className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                <p className="text-[13px]">No appointments scheduled for today</p>
+              </div>
+            )}
+
+            {/* Stylist & Service breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {daily.stylistPerformance?.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-[14px] text-gray-900 mb-3 flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" /> Stylists Today
+                  </h3>
+                  <div className="space-y-2">
+                    {daily.stylistPerformance.map((s: any) => (
+                      <div key={s.name} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: s.color }}>
+                          {s.name.split(" ").map((n: string) => n[0]).join("")}
+                        </div>
+                        <span className="flex-1 font-medium text-[13px] text-gray-900">{s.name}</span>
+                        <div className="text-right">
+                          <p className="font-semibold text-[13px] text-gray-900">${s.revenue.toLocaleString()}</p>
+                          <p className="text-[10px] text-gray-500">{s.appointments} appts</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {daily.serviceBreakdown?.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-[14px] text-gray-900 mb-3 flex items-center gap-2">
+                    <Scissors className="h-4 w-4 text-primary" /> Services Today
+                  </h3>
+                  <div className="space-y-2">
+                    {daily.serviceBreakdown.map((s: any) => (
+                      <div key={s.name} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50">
+                        <div className="w-8 h-8 rounded-lg bg-primary-50 flex items-center justify-center shrink-0">
+                          <Scissors className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-[13px] text-gray-900">{s.name}</p>
+                          <p className="text-[10px] text-gray-500">{s.count} bookings</p>
+                        </div>
+                        <span className="font-semibold text-[13px] text-gray-900">${s.revenue.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Overall Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card className="border-gray-100 shadow-sm rounded-xl">
+          <CardContent className="p-5 flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50">
+              <DollarSign className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-[12px] text-gray-500">All-Time Revenue</p>
+              <p className="text-2xl font-bold text-gray-900">${(totals?.revenue || 0).toLocaleString()}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-gray-100 shadow-sm rounded-xl">
+          <CardContent className="p-5 flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-sky-50">
+              <Calendar className="h-5 w-5 text-sky-600" />
+            </div>
+            <div>
+              <p className="text-[12px] text-gray-500">Total Appointments</p>
+              <p className="text-2xl font-bold text-gray-900">{totals?.appointments || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="border-gray-100 shadow-sm rounded-xl">
+          <CardContent className="p-5 flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50">
+              <Users className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-[12px] text-gray-500">Total Customers</p>
+              <p className="text-2xl font-bold text-gray-900">{totals?.customers || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
+      {/* Revenue Trend + Service Mix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
-              <BarChart3 className="h-5 w-5 text-primary" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               Revenue Trend
             </CardTitle>
-            <CardDescription className="text-[13px] text-gray-500">Monthly revenue for 2026</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {revenueData.map((data: any) => (
-                <div key={data.month} className="flex items-center gap-3">
-                  <span className="w-8 text-[12px] text-gray-500 font-medium">{data.month}</span>
-                  <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
+              {revenueData.map((rd: any) => (
+                <div key={rd.month} className="flex items-center gap-3">
+                  <span className="w-8 text-[12px] text-gray-500 font-medium">{rd.month}</span>
+                  <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
                     <div
                       className="h-full bg-primary-500 rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
-                      style={{ width: `${Math.min((data.revenue / 50000) * 100, 100)}%` }}
+                      style={{ width: `${Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100)}%` }}
                     >
-                      <span className="text-[11px] font-bold text-white">
-                        ${(data.revenue / 1000).toFixed(0)}k
+                      <span className="text-[10px] font-bold text-white">
+                        ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
                       </span>
                     </div>
                   </div>
-                  <span className="w-16 text-[12px] text-gray-500 text-right">{data.appointments} appts</span>
+                  <span className="w-16 text-[11px] text-gray-500 text-right">{rd.appointments} appts</span>
                 </div>
               ))}
             </div>
@@ -189,63 +332,27 @@ export default function AnalyticsPage() {
 
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
-            <CardTitle className="text-[15px] font-semibold text-gray-900">Service Breakdown</CardTitle>
-            <CardDescription className="text-[13px] text-gray-500">Revenue by service type</CardDescription>
+            <CardTitle className="text-[15px] font-semibold text-gray-900">Service Mix</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="relative w-40 h-40 mx-auto">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                  {serviceBreakdown.reduce(
-                    (acc: any, service: any, i: number) => {
-                      const circumference = 2 * Math.PI * 45;
-                      const offset = acc.offset;
-                      const length = (service.percentage / 100) * circumference;
-                      const colors = ["#8b5cf6", "#0ea5e9", "#ec4899", "#10b981", "#f59e0b"];
-
-                      acc.elements.push(
-                        <circle
-                          key={i}
-                          cx="60"
-                          cy="60"
-                          r="45"
-                          fill="none"
-                          stroke={colors[i] || colors[colors.length - 1]}
-                          strokeWidth="12"
-                          strokeDasharray={`${length} ${circumference - length}`}
-                          strokeDashoffset={`${-offset}`}
-                          strokeLinecap="round"
-                        />
-                      );
-
-                      acc.offset += length;
-                      return acc;
-                    },
-                    { elements: [] as React.ReactNode[], offset: 0 }
-                  ).elements}
-                </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <p className="text-2xl font-bold text-gray-900">
-                    ${(revenueData.reduce((s: number, r: any) => s + r.revenue, 0) / 1000).toFixed(0)}k
-                  </p>
-                  <p className="text-[12px] text-gray-500">Total</p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {serviceBreakdown.map((service: any) => (
-                  <div key={service.name} className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${service.color || "bg-gray-500"}`} />
-                    <span className="flex-1 text-[13px] text-gray-900">{service.name}</span>
-                    <span className="text-[13px] font-medium text-gray-900">{service.percentage}%</span>
+            <div className="space-y-3">
+              {serviceBreakdown.map((s: any) => (
+                <div key={s.name}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[12px] text-gray-700 font-medium">{s.name}</span>
+                    <span className="text-[12px] font-bold text-gray-900">{s.percentage}%</span>
                   </div>
-                ))}
-              </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${s.color}`} style={{ width: `${s.percentage}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* Peak Hours + Top Stylists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
@@ -253,14 +360,13 @@ export default function AnalyticsPage() {
               <Clock className="h-5 w-5 text-primary" />
               Peak Hours
             </CardTitle>
-            <CardDescription className="text-[13px] text-gray-500">Average busyness by hour</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {peakHours.map((hour: any) => (
                 <div key={hour.hour} className="flex items-center gap-3">
-                  <span className="w-12 text-[12px] text-gray-500">{hour.hour}</span>
-                  <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden">
+                  <span className="w-12 text-[11px] text-gray-500">{hour.hour}</span>
+                  <div className="flex-1 h-5 bg-gray-100 rounded-lg overflow-hidden">
                     <div
                       className="h-full rounded-lg transition-all duration-500"
                       style={{
@@ -269,7 +375,7 @@ export default function AnalyticsPage() {
                       }}
                     />
                   </div>
-                  <span className="w-8 text-[12px] font-medium text-gray-900 text-right">{hour.percentage}%</span>
+                  <span className="w-8 text-[11px] font-medium text-gray-900 text-right">{hour.percentage}%</span>
                 </div>
               ))}
             </div>
@@ -282,28 +388,19 @@ export default function AnalyticsPage() {
               <TrendingUp className="h-5 w-5 text-primary" />
               Top Stylists
             </CardTitle>
-            <CardDescription className="text-[13px] text-gray-500">Performance rankings this month</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {topStylists.map((stylist: any, i: number) => (
-                <div key={stylist.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-white ${
-                    i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-300" : i === 2 ? "bg-amber-600" : "bg-primary-500"
-                  }`}>
+                <div key={stylist.name} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg font-bold text-white text-[12px] shrink-0" style={{ backgroundColor: stylist.color }}>
                     {i + 1}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900">{stylist.name}</p>
-                    <div className="flex items-center gap-3 text-[13px] text-gray-500">
-                      <span>{stylist.appointments} appointments</span>
-                      <span className="flex items-center gap-1">
-                        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                        {stylist.rating}
-                      </span>
-                    </div>
+                    <p className="font-medium text-[13px] text-gray-900">{stylist.name}</p>
+                    <p className="text-[11px] text-gray-500">{stylist.appointments} appointments</p>
                   </div>
-                  <p className="text-lg font-bold text-gray-900">{stylist.revenue}</p>
+                  <p className="font-bold text-[14px] text-gray-900">{stylist.revenue}</p>
                 </div>
               ))}
             </div>

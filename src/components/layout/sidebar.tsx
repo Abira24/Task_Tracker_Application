@@ -31,7 +31,7 @@ const navItems = [
   { title: "Services", href: "/services", icon: Scissors },
   { title: "Tasks", href: "/tasks", icon: CheckSquare, badge: "" },
   { title: "Inventory", href: "/inventory", icon: Package },
-  { title: "Analytics", href: "/analytics", icon: BarChart3 },
+  { title: "Reports", href: "/analytics", icon: BarChart3 },
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 
