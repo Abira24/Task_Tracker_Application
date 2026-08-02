@@ -55,10 +55,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, email, phone, notes } = body;
+
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return NextResponse.json({ error: "Valid email is required" }, { status: 400 });
+    }
+
     const id = `cust_${Date.now()}`;
-    await query("INSERT INTO Customer (id, name, email, phone, notes) VALUES (?, ?, ?, ?, ?)", [id, name, email, phone || null, notes || null]);
+    await query("INSERT INTO Customer (id, name, email, phone, notes) VALUES (?, ?, ?, ?, ?)", [id, name.trim(), email.trim(), phone || null, notes || null]);
     return NextResponse.json({ id, success: true });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.code === "ER_DUP_ENTRY") {
+      return NextResponse.json({ error: "A customer with this email already exists" }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to create customer" }, { status: 500 });
   }
 }

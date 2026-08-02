@@ -45,10 +45,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, category, stock, minStock, price, supplier } = body;
+
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return NextResponse.json({ error: "Product name is required" }, { status: 400 });
+    }
+    if (!category || typeof category !== "string") {
+      return NextResponse.json({ error: "Category is required" }, { status: 400 });
+    }
+    if (price === undefined || isNaN(Number(price)) || Number(price) < 0) {
+      return NextResponse.json({ error: "Valid price is required" }, { status: 400 });
+    }
+
     const id = `inv_${Date.now()}`;
     await query(
       "INSERT INTO InventoryItem (id, name, category, stock, minStock, price, supplier) VALUES (?, ?, ?, ?, ?, ?, ?)",
-      [id, name, category, stock || 0, minStock || 5, price, supplier || null]
+      [id, name.trim(), category, stock || 0, minStock || 5, Number(price), supplier || null]
     );
     return NextResponse.json({ id, success: true });
   } catch (error) {

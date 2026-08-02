@@ -146,7 +146,17 @@ export default function InventoryPage() {
           <p className="text-gray-500">Track and manage salon supplies and products</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer">
+          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
+            const csv = ["Name,Category,Stock,Min Stock,Price,Supplier,Status"];
+            items.forEach((item) => csv.push(`${item.name},${item.category},${item.stock},${item.minStock},${item.price},${item.supplier || ""},${item.status}`));
+            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `inventory-report-${new Date().toISOString().split("T")[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <BarChart3 className="h-4 w-4" /> Reports
           </Button>
           <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">

@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { getSession } from "@/lib/session";
 
 export async function POST() {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const tables = ["Appointment", "Task", "InventoryItem", "Customer", "Service", "Stylist", "User"];
     for (const table of tables) {
       await query(`DELETE FROM \`${table}\``);
     }
 
-    const { execSync } = await import("child_process");
     const { exec } = await import("child_process");
     const util = await import("util");
     const execPromise = util.promisify(exec);

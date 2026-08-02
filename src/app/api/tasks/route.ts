@@ -29,8 +29,8 @@ export async function GET() {
         assignee: t.assignee || "Unassigned",
         dueDate: dueDateStr,
         tags: t.tags ? JSON.parse(t.tags) : [],
-        comments: Math.floor(Math.random() * 10),
-        attachments: Math.floor(Math.random() * 5),
+        comments: 0,
+        attachments: 0,
         completed: t.status === "done",
       };
     });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSingle } from "@/lib/db";
 import { createSession } from "@/lib/session";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,9 +11,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const user = await getSingle<any>("SELECT * FROM User WHERE email = ? AND password = ?", [email, password]);
+    const user = await getSingle<any>("SELECT * FROM User WHERE email = ?", [email]);
 
     if (!user) {
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 

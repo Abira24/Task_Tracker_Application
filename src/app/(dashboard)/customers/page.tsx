@@ -147,7 +147,17 @@ export default function CustomersPage() {
           <p className="text-gray-500">Manage your customer database and relationships</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer">
+          <Button variant="outline" size="sm" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
+            const csv = ["Name,Email,Phone,Status,Visits,Total Spent,Last Visit"];
+            customers.forEach((c) => csv.push(`${c.name},${c.email},${c.phone || ""},${c.status},${c.visits},${c.totalSpent},${c.lastVisit}`));
+            const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `customers-export-${new Date().toISOString().split("T")[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+          }}>
             <Download className="h-4 w-4" /> Export
           </Button>
           <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">

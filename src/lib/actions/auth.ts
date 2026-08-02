@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createSession, deleteSession, getSession } from "@/lib/session";
 import { getSingle } from "@/lib/db";
 import { z } from "zod/v3";
+import bcrypt from "bcryptjs";
 
 const LoginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -34,11 +35,18 @@ export async function login(state: LoginState, formData: FormData) {
 
   try {
     const user = await getSingle<any>(
-      "SELECT * FROM User WHERE email = ? AND password = ?",
-      [email, password]
+      "SELECT * FROM User WHERE email = ?",
+      [email]
     );
 
     if (!user) {
+      return {
+        message: "Invalid email or password",
+      };
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
       return {
         message: "Invalid email or password",
       };

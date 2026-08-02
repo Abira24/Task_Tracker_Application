@@ -162,7 +162,7 @@ export default function ServicesPage() {
           { label: "Total Services", value: String(stats.total || services.length), icon: Scissors, bg: "bg-violet-50", iconColor: "text-violet-600" },
           { label: "Most Popular", value: stats.mostPopular || "N/A", icon: Star, bg: "bg-amber-50", iconColor: "text-amber-600" },
           { label: "Avg. Price", value: stats.avgPrice || "$0", icon: DollarSign, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
-          { label: "Avg. Duration", value: "1h 22m", icon: Clock, bg: "bg-sky-50", iconColor: "text-sky-600" },
+          { label: "Avg. Duration", value: stats.avgDuration || "0m", icon: Clock, bg: "bg-sky-50", iconColor: "text-sky-600" },
         ].map((stat) => (
           <Card key={stat.label} className="border-gray-100 shadow-sm rounded-xl">
             <CardContent className="p-5 flex items-center gap-3">

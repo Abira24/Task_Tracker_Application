@@ -46,17 +46,23 @@ export async function GET() {
       color: ["bg-violet-500", "bg-sky-500", "bg-pink-500", "bg-emerald-500", "bg-amber-500"][i] || "bg-gray-500",
     }));
 
-    const peakHours = [
-      { hour: "9 AM", percentage: 45 },
-      { hour: "10 AM", percentage: 72 },
-      { hour: "11 AM", percentage: 88 },
-      { hour: "12 PM", percentage: 65 },
-      { hour: "1 PM", percentage: 78 },
-      { hour: "2 PM", percentage: 82 },
-      { hour: "3 PM", percentage: 70 },
-      { hour: "4 PM", percentage: 60 },
-      { hour: "5 PM", percentage: 35 },
-    ];
+    const peakHoursData = await query<any[]>(
+      `SELECT HOUR(STR_TO_DATE(startTime, '%h:%i %p')) as hour, COUNT(*) as count
+       FROM Appointment WHERE status != 'cancelled' AND startTime IS NOT NULL
+       GROUP BY HOUR(STR_TO_DATE(startTime, '%h:%i %p'))
+       ORDER BY hour`
+    );
+
+    const maxCount = Math.max(...peakHoursData.map((h: any) => h.count || 1), 1);
+    const peakHours = peakHoursData.map((h: any) => {
+      const hourNum = h.hour;
+      let label = "";
+      if (hourNum === 0) label = "12 AM";
+      else if (hourNum < 12) label = `${hourNum} AM`;
+      else if (hourNum === 12) label = "12 PM";
+      else label = `${hourNum - 12} PM`;
+      return { hour: label, percentage: Math.round((h.count / maxCount) * 100) };
+    });
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentMonth = new Date().getMonth();
@@ -64,8 +70,8 @@ export async function GET() {
       const found = revenueData.find((r: any) => r.month === month);
       return {
         month,
-        revenue: found ? Number(found.revenue) : Math.floor(30000 + Math.random() * 20000),
-        appointments: found ? Number(found.appointments) : Math.floor(90 + Math.random() * 50),
+        revenue: found ? Number(found.revenue) : 0,
+        appointments: found ? Number(found.appointments) : 0,
       };
     });
 

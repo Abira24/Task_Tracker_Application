@@ -30,6 +30,13 @@ export async function GET() {
       total: mapped.length,
       mostPopular: mapped.length > 0 ? mapped.reduce((best: any, s: any) => s.bookings > best.bookings ? s : best, mapped[0]).name : "N/A",
       avgPrice: mapped.length > 0 ? `$${(mapped.reduce((sum: number, s: any) => sum + s.priceValue, 0) / mapped.length).toFixed(0)}` : "$0",
+      avgDuration: (() => {
+        const totalMin = services.reduce((sum: number, s: any) => sum + (s.duration || 0), 0);
+        const avg = services.length > 0 ? totalMin / services.length : 0;
+        const h = Math.floor(avg / 60);
+        const m = Math.round(avg % 60);
+        return h > 0 ? `${h}h ${m > 0 ? `${m}m` : ""}` : `${m}m`;
+      })(),
     };
 
     return NextResponse.json({ services: mapped, categories, stats });
@@ -43,10 +50,24 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { name, description, duration, price, category } = body;
+
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return NextResponse.json({ error: "Service name is required" }, { status: 400 });
+    }
+    if (!price || isNaN(Number(price)) || Number(price) <= 0) {
+      return NextResponse.json({ error: "Valid price is required" }, { status: 400 });
+    }
+    if (!duration || isNaN(Number(duration)) || Number(duration) <= 0) {
+      return NextResponse.json({ error: "Valid duration is required" }, { status: 400 });
+    }
+    if (!category || typeof category !== "string") {
+      return NextResponse.json({ error: "Category is required" }, { status: 400 });
+    }
+
     const id = `svc_${Date.now()}`;
     await query(
       "INSERT INTO Service (id, name, description, duration, price, category) VALUES (?, ?, ?, ?, ?, ?)",
-      [id, name, description || null, duration, price, category]
+      [id, name.trim(), description || null, Number(duration), Number(price), category]
     );
     return NextResponse.json({ id, success: true });
   } catch (error) {

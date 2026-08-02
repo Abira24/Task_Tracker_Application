@@ -2,27 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decrypt } from "@/lib/session";
 
+const publicPaths = ["/login", "/"];
+const publicApiPaths = ["/api/auth/login", "/api/auth/me"];
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow login page, root (handles redirect), API routes, static files
-  if (
-    pathname === "/login" ||
-    pathname === "/" ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
+  if (publicPaths.includes(pathname) || pathname.startsWith("/_next") || pathname.startsWith("/favicon") || pathname.includes(".")) {
     return NextResponse.next();
   }
 
-  // Check for session cookie
+  if (publicApiPaths.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next();
+  }
+
   const sessionCookie = request.cookies.get("session")?.value;
   const session = await decrypt(sessionCookie);
 
-  // If no valid session, redirect to login
   if (!session) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
@@ -32,5 +32,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

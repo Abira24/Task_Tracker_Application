@@ -30,6 +30,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { date, startTime, endTime, status, notes, customerId, serviceId, stylistId } = body;
 
+    if (!date) {
+      return NextResponse.json({ error: "Date is required" }, { status: 400 });
+    }
+    if (!startTime || !endTime) {
+      return NextResponse.json({ error: "Start and end time are required" }, { status: 400 });
+    }
+    if (!customerId) {
+      return NextResponse.json({ error: "Customer is required" }, { status: 400 });
+    }
+    if (!serviceId) {
+      return NextResponse.json({ error: "Service is required" }, { status: 400 });
+    }
+    if (!stylistId) {
+      return NextResponse.json({ error: "Stylist is required" }, { status: 400 });
+    }
+
     const id = `apt_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
     await query(

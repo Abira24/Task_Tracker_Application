@@ -12,6 +12,7 @@ import {
   ArrowDownRight,
   Clock,
   Star,
+  Download,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/analytics")
@@ -34,6 +36,24 @@ export default function AnalyticsPage() {
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  const exportReport = () => {
+    if (!data) return;
+    const report = {
+      generatedAt: new Date().toISOString(),
+      kpis: data.kpis,
+      revenueData: data.revenueData,
+      serviceBreakdown: data.serviceBreakdown,
+      topStylists: data.topStylists,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loading) {
     return (
@@ -59,8 +79,12 @@ export default function AnalyticsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">This Month</Button>
-          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50">Export Report</Button>
+          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50" onClick={() => setSelectedMonth(selectedMonth ? null : new Date().toLocaleString("en", { month: "short" }))}>
+            {selectedMonth || "This Month"}
+          </Button>
+          <Button variant="outline" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50" onClick={exportReport}>
+            <Download className="h-4 w-4 mr-1" /> Export Report
+          </Button>
         </div>
       </div>
 

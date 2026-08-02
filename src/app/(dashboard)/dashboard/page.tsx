@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/toast";
 import {
   Users,
   Calendar,
@@ -42,6 +43,7 @@ const statusColors: Record<string, string> = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [data, setData] = useState<any>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +70,10 @@ export default function DashboardPage() {
         setData(statsData);
         setUser(userData.user);
       })
-      .catch(console.error)
+      .catch((e) => {
+        console.error(e);
+        showToast("Failed to load dashboard data", "error");
+      })
       .finally(() => setLoading(false));
   };
 
@@ -108,7 +113,7 @@ export default function DashboardPage() {
       const endMin = apptForm.endTime.split(":")[1];
       const end12 = `${endHour > 12 ? endHour - 12 : endHour}:${endMin} ${endHour >= 12 ? "PM" : "AM"}`;
 
-      await fetch("/api/appointments", {
+      const res = await fetch("/api/appointments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,10 +125,17 @@ export default function DashboardPage() {
           stylistId: apptForm.stylistId,
         }),
       });
-      setShowAppointmentDialog(false);
-      loadData();
+      if (res.ok) {
+        showToast("Appointment booked successfully");
+        setShowAppointmentDialog(false);
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Failed to book appointment", "error");
+      }
     } catch (e) {
       console.error(e);
+      showToast("Failed to book appointment", "error");
     } finally {
       setFormSubmitting(false);
     }
@@ -132,15 +144,22 @@ export default function DashboardPage() {
   const createCustomer = async () => {
     setFormSubmitting(true);
     try {
-      await fetch("/api/customers", {
+      const res = await fetch("/api/customers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(custForm),
       });
-      setShowCustomerDialog(false);
-      loadData();
+      if (res.ok) {
+        showToast("Customer added successfully");
+        setShowCustomerDialog(false);
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Failed to add customer", "error");
+      }
     } catch (e) {
       console.error(e);
+      showToast("Failed to add customer", "error");
     } finally {
       setFormSubmitting(false);
     }
@@ -150,7 +169,7 @@ export default function DashboardPage() {
     setFormSubmitting(true);
     try {
       const durationTotal = svcForm.duration.includes("h") ? parseInt(svcForm.duration) * 60 : parseInt(svcForm.duration);
-      await fetch("/api/services", {
+      const res = await fetch("/api/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -160,10 +179,17 @@ export default function DashboardPage() {
           price: parseFloat(svcForm.price),
         }),
       });
-      setShowServiceDialog(false);
-      loadData();
+      if (res.ok) {
+        showToast("Service added successfully");
+        setShowServiceDialog(false);
+        loadData();
+      } else {
+        const data = await res.json();
+        showToast(data.error || "Failed to add service", "error");
+      }
     } catch (e) {
       console.error(e);
+      showToast("Failed to add service", "error");
     } finally {
       setFormSubmitting(false);
     }

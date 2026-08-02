@@ -1,4 +1,5 @@
 import mysql from "mysql2/promise";
+import bcrypt from "bcryptjs";
 
 const DATABASE_URL = process.env.DATABASE_URL || "mysql://root:SriLanka07@localhost:3306/salon_tasks";
 
@@ -121,16 +122,17 @@ async function main() {
     // Seed data
     console.log("Seeding data...");
 
-    // Users (password is plain text for demo - in production use bcrypt)
+    // Users (passwords hashed with bcryptjs)
     const users = [
       { id: "user_1", email: "admin@glamour.com", name: "Jane Doe", password: "admin123", role: "admin" },
       { id: "user_2", email: "stylist@glamour.com", name: "Emma Wilson", password: "stylist123", role: "stylist" },
     ];
 
     for (const u of users) {
+      const hashedPassword = await bcrypt.hash(u.password, 10);
       await pool.execute(
         "INSERT IGNORE INTO User (id, email, name, password, role) VALUES (?, ?, ?, ?, ?)",
-        [u.id, u.email, u.name, u.password, u.role]
+        [u.id, u.email, u.name, hashedPassword, u.role]
       );
     }
 
