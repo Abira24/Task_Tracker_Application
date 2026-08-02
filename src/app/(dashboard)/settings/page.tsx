@@ -143,7 +143,7 @@ export default function SettingsPage() {
                   onClick={() => setActiveTab(item.id)}
                   className={`flex items-center gap-3 w-full px-3 py-2 rounded-xl text-[13px] font-medium transition-colors cursor-pointer ${
                     activeTab === item.id
-                      ? "bg-violet-50 text-violet-600"
+                      ? "bg-primary-50 text-primary"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   }`}
                 >
@@ -168,11 +168,11 @@ export default function SettingsPage() {
                 <div className="flex items-center gap-4">
                   <div className="relative">
                     <Avatar className="h-20 w-20">
-                      <AvatarFallback className="bg-violet-50 text-violet-600 text-2xl font-bold">
+                      <AvatarFallback className="bg-primary-50 text-primary text-2xl font-bold">
                         {salonName.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "GS"}
                       </AvatarFallback>
                     </Avatar>
-                    <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-violet-600 text-white rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-violet-700">
+                    <button className="absolute -bottom-1 -right-1 w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-sm cursor-pointer hover:bg-primary/90">
                       <Camera className="h-3.5 w-3.5" />
                     </button>
                   </div>
@@ -237,7 +237,7 @@ export default function SettingsPage() {
                       <CheckCircle2 className="h-4 w-4" /> Saved successfully
                     </span>
                   )}
-                  <Button onClick={saveSettings} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
+                  <Button onClick={saveSettings} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-xl">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
                     Save Changes
                   </Button>
@@ -270,7 +270,7 @@ export default function SettingsPage() {
                     <button
                       onClick={() => toggleNotification(item.key)}
                       className={`w-10 h-6 rounded-full flex items-center px-0.5 cursor-pointer transition-colors ${
-                        notifications[item.key] ? "bg-violet-600" : "bg-gray-300"
+                        notifications[item.key] ? "bg-primary" : "bg-gray-300"
                       }`}
                     >
                       <div className={`w-5 h-5 bg-white rounded-full shadow-sm transform transition-transform ${
@@ -285,7 +285,7 @@ export default function SettingsPage() {
                       <CheckCircle2 className="h-4 w-4" /> Saved successfully
                     </span>
                   )}
-                  <Button onClick={saveSettings} disabled={saving} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl">
+                  <Button onClick={saveSettings} disabled={saving} className="bg-primary hover:bg-primary/90 text-white rounded-xl">
                     {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Save className="h-4 w-4 mr-1" />}
                     Save Changes
                   </Button>

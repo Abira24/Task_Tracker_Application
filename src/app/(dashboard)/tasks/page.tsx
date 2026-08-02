@@ -203,18 +203,18 @@ export default function TasksPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
-            <ListTodo className="h-6 w-6 text-violet-600" /> Task Tracker
+            <ListTodo className="h-6 w-6 text-primary" /> Task Tracker
           </h1>
           <p className="text-gray-500">Manage salon operations and team tasks</p>
         </div>
-        <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+        <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
           <Plus className="h-4 w-4" /> New Task
         </Button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
-          { label: "Total Tasks", value: stats.total, bg: "bg-violet-50", textColor: "text-violet-700" },
+          { label: "Total Tasks", value: stats.total, bg: "bg-primary-50", textColor: "text-primary-700" },
           { label: "To Do", value: stats.todo, bg: "bg-gray-100", textColor: "text-gray-700" },
           { label: "In Progress", value: stats.inProgress, bg: "bg-sky-50", textColor: "text-sky-700" },
           { label: "Done", value: stats.done, bg: "bg-emerald-50", textColor: "text-emerald-700" },
@@ -244,7 +244,7 @@ export default function TasksPage() {
               onClick={() => setFilterPriority(p)}
               className={`px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors cursor-pointer ${
                 filterPriority === p
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-white"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -302,7 +302,7 @@ export default function TasksPage() {
                         <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
                           <div className="flex items-center gap-2">
                             <Avatar className="h-5 w-5">
-                              <AvatarFallback className="text-[8px] bg-violet-50 text-violet-600">
+                              <AvatarFallback className="text-[8px] bg-primary-50 text-primary">
                                 {task.assignee.split(" ").map((n: string) => n[0]).join("")}
                               </AvatarFallback>
                             </Avatar>
@@ -394,7 +394,7 @@ export default function TasksPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl cursor-pointer">Cancel</Button>
-            <Button onClick={createTask} disabled={formSubmitting || !createForm.title} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={createTask} disabled={formSubmitting || !createForm.title} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Create Task
             </Button>
@@ -457,7 +457,7 @@ export default function TasksPage() {
             <Button variant="outline" onClick={() => deleteTask(selectedTask?.id)} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer">
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
-            <Button onClick={updateTask} disabled={formSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={updateTask} disabled={formSubmitting} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Changes
             </Button>

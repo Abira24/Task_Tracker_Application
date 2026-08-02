@@ -7,7 +7,7 @@
   --card-foreground: #1e293b;
   --popover: #ffffff;
   --popover-foreground: #1e293b;
-  --primary: #6d28d9;
+  --primary: #363c51;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
   --secondary-foreground: #475569;
@@ -19,7 +19,7 @@
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #6d28d9;
+  --ring: #363c51;
   --radius: 0.75rem;
   --sidebar-bg: #ffffff;
   --sidebar-fg: #1e293b;
@@ -51,12 +51,25 @@
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-muted: var(--sidebar-muted);
+  --color-primary-50: #f4f5f7;
+  --color-primary-100: #e4e6ec;
+  --color-primary-200: #c6c9d6;
+  --color-primary-300: #9da3b9;
+  --color-primary-400: #6f7895;
+  --color-primary-500: #363c51;
+  --color-primary-600: #2b3041;
+  --color-primary-700: #1f232f;
+  --color-primary-800: #12151d;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-lexend-deca);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html {
+  font-size: 14px;
 }
 
 * {
@@ -94,4 +107,12 @@ body {
 }
 .animate-pulse-dot {
   animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fade-in {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: 0.3s ease-out forwards fade-in;
 }

@@ -44,7 +44,7 @@ const statusStyles: Record<string, string> = {
   confirmed: "bg-emerald-50 text-emerald-700 border-emerald-100",
   "in-progress": "bg-sky-50 text-sky-700 border-sky-100",
   pending: "bg-amber-50 text-amber-700 border-amber-100",
-  completed: "bg-violet-50 text-violet-700 border-violet-100",
+  completed: "bg-primary-50 text-primary-700 border-primary-100",
   cancelled: "bg-red-50 text-red-700 border-red-100",
 };
 
@@ -244,7 +244,7 @@ export default function AppointmentsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -275,7 +275,7 @@ export default function AppointmentsPage() {
               Calendar
             </button>
           </div>
-          <Button onClick={openCreateDialog} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+          <Button onClick={openCreateDialog} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
             <Plus className="h-4 w-4" />
             New Booking
           </Button>
@@ -308,7 +308,7 @@ export default function AppointmentsPage() {
               onClick={() => setWeekOffset(getWeekForDay(day))}
               className={`flex flex-col items-center min-w-[60px] px-3 py-2 rounded-xl transition-all cursor-pointer ${
                 isToday(day)
-                  ? "bg-violet-600 text-white shadow-sm"
+                  ? "bg-primary text-white shadow-sm"
                   : "hover:bg-gray-50 text-gray-700"
               }`}
             >
@@ -525,7 +525,7 @@ export default function AppointmentsPage() {
             <Button
               onClick={createAppointment}
               disabled={formSubmitting || !createForm.customerId || !createForm.serviceId || !createForm.stylistId}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer"
             >
               {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Book Appointment
@@ -581,7 +581,7 @@ export default function AppointmentsPage() {
                       onClick={() => updateStatus(selectedApt.id, s)}
                       className={`px-3 py-1.5 rounded-xl text-[12px] font-medium transition-all cursor-pointer ${
                         selectedApt.status === s
-                          ? "bg-violet-600 text-white"
+                          ? "bg-primary text-white"
                           : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                       }`}
                     >

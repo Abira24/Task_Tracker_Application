@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gray-50">
-                  {kpi.title?.includes("Revenue") && <DollarSign className="h-6 w-6 text-violet-600" />}
+                  {kpi.title?.includes("Revenue") && <DollarSign className="h-6 w-6 text-primary" />}
                   {kpi.title?.includes("Appointments") && <Calendar className="h-6 w-6 text-sky-600" />}
                   {kpi.title?.includes("Customers") && <Users className="h-6 w-6 text-emerald-600" />}
                   {kpi.title?.includes("Rating") && <Star className="h-6 w-6 text-amber-600" />}
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
         <Card className="lg:col-span-2 border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
-              <BarChart3 className="h-5 w-5 text-violet-600" />
+              <BarChart3 className="h-5 w-5 text-primary" />
               Revenue Trend
             </CardTitle>
             <CardDescription className="text-[13px] text-gray-500">Monthly revenue for 2026</CardDescription>
@@ -136,7 +136,7 @@ export default function AnalyticsPage() {
                   <span className="w-8 text-[12px] text-gray-500 font-medium">{data.month}</span>
                   <div className="flex-1 h-8 bg-gray-100 rounded-lg overflow-hidden">
                     <div
-                      className="h-full bg-violet-500 rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                      className="h-full bg-primary-500 rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
                       style={{ width: `${Math.min((data.revenue / 50000) * 100, 100)}%` }}
                     >
                       <span className="text-[11px] font-bold text-white">
@@ -214,7 +214,7 @@ export default function AnalyticsPage() {
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
-              <Clock className="h-5 w-5 text-violet-600" />
+              <Clock className="h-5 w-5 text-primary" />
               Peak Hours
             </CardTitle>
             <CardDescription className="text-[13px] text-gray-500">Average busyness by hour</CardDescription>
@@ -243,7 +243,7 @@ export default function AnalyticsPage() {
         <Card className="border-gray-100 shadow-sm rounded-xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
-              <TrendingUp className="h-5 w-5 text-violet-600" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               Top Stylists
             </CardTitle>
             <CardDescription className="text-[13px] text-gray-500">Performance rankings this month</CardDescription>
@@ -253,7 +253,7 @@ export default function AnalyticsPage() {
               {topStylists.map((stylist: any, i: number) => (
                 <div key={stylist.name} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
                   <div className={`flex items-center justify-center w-10 h-10 rounded-xl font-bold text-white ${
-                    i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-300" : i === 2 ? "bg-amber-600" : "bg-violet-500"
+                    i === 0 ? "bg-amber-400" : i === 1 ? "bg-gray-300" : i === 2 ? "bg-amber-600" : "bg-primary-500"
                   }`}>
                     {i + 1}
                   </div>

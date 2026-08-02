@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -14,7 +15,6 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
   LogOut,
   Menu,
   X,
@@ -64,16 +64,23 @@ export function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-100">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600 shadow-sm">
-          <Sparkles className="h-4.5 w-4.5 text-white" />
+        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden shrink-0">
+          <Image
+            src="/logo.jpeg"
+            alt="Muvi Salon Logo"
+            className="w-full h-full object-contain"
+            width={36}
+            height={36}
+            priority
+          />
         </div>
         {!collapsed && (
           <div className="flex flex-col">
             <span className="font-bold text-gray-900 text-[15px] leading-tight tracking-tight">
-              Glamour
+              Muvi
             </span>
             <span className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
-              Salon Suite
+              Salon
             </span>
           </div>
         )}
@@ -124,7 +131,7 @@ export function Sidebar() {
           )}
         >
           <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-bold">
+            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white text-xs font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>

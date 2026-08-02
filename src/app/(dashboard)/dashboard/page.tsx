@@ -198,7 +198,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -256,7 +256,7 @@ export default function DashboardPage() {
                 <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${stat.bg || "bg-gray-50"}`}>
                   {stat.title === "Total Revenue" && <DollarSign className="h-5 w-5 text-emerald-600" />}
                   {stat.title === "Appointments" && <Calendar className="h-5 w-5 text-blue-600" />}
-                  {stat.title === "Active Customers" && <Users className="h-5 w-5 text-violet-600" />}
+                  {stat.title === "Active Customers" && <Users className="h-5 w-5 text-primary" />}
                   {stat.title === "Avg. Rating" && <Star className="h-5 w-5 text-amber-600" />}
                 </div>
               </div>
@@ -357,7 +357,7 @@ export default function DashboardPage() {
                   key={customer.name}
                   className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-[11px]">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white font-bold text-[11px]">
                     {customer.name.split(" ").map((n: string) => n[0]).join("")}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -386,7 +386,7 @@ export default function DashboardPage() {
                 onClick={openAppointmentDialog}
                 className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-50 text-violet-600">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary">
                   <Calendar className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">Book Appointment</span>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
                 onClick={openServiceDialog}
                 className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-pink-50 text-pink-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary">
                   <Scissors className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">Add Service</span>
@@ -502,7 +502,7 @@ export default function DashboardPage() {
             <Button
               onClick={createAppointment}
               disabled={formSubmitting || !apptForm.customerId || !apptForm.serviceId || !apptForm.stylistId}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl"
             >
               {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Book Appointment
@@ -550,7 +550,7 @@ export default function DashboardPage() {
             <Button
               onClick={createCustomer}
               disabled={formSubmitting || !custForm.name || !custForm.email}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl"
             >
               {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add Customer
@@ -612,7 +612,7 @@ export default function DashboardPage() {
             <Button
               onClick={createService}
               disabled={formSubmitting || !svcForm.name || !svcForm.price}
-              className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl"
             >
               {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
               Add Service

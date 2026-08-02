@@ -56,7 +56,7 @@ export function Header() {
           onClick={() => router.push("/notifications")}
         >
           <Bell className="h-5 w-5" />
-          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-pink-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold">
+          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 bg-primary rounded-full text-[10px] text-white flex items-center justify-center font-bold">
             0
           </span>
         </Button>

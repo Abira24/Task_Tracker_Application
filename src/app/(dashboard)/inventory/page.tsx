@@ -159,7 +159,7 @@ export default function InventoryPage() {
           }}>
             <BarChart3 className="h-4 w-4" /> Reports
           </Button>
-          <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+          <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
             <Plus className="h-4 w-4" /> Add Item
           </Button>
         </div>
@@ -167,7 +167,7 @@ export default function InventoryPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Items", value: stats.total || 0, icon: Package, bg: "bg-violet-50", iconColor: "text-violet-600" },
+          { label: "Total Items", value: stats.total || 0, icon: Package, bg: "bg-primary-50", iconColor: "text-primary" },
           { label: "In Stock", value: stats.inStock || 0, icon: TrendingUp, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
           { label: "Low Stock", value: stats.lowStock || 0, icon: TrendingDown, bg: "bg-amber-50", iconColor: "text-amber-600" },
           { label: "Critical", value: stats.critical || 0, icon: AlertTriangle, bg: "bg-red-50", iconColor: "text-red-600" },
@@ -218,7 +218,7 @@ export default function InventoryPage() {
                   <tr key={item.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-50 text-violet-600">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary">
                           <Package className="h-5 w-5" />
                         </div>
                         <div>
@@ -317,7 +317,7 @@ export default function InventoryPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl cursor-pointer">Cancel</Button>
-            <Button onClick={createItem} disabled={formSubmitting || !createForm.name} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={createItem} disabled={formSubmitting || !createForm.name} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Item
             </Button>
@@ -374,7 +374,7 @@ export default function InventoryPage() {
             <Button variant="outline" onClick={() => deleteItem(selectedItem?.id)} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer">
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
-            <Button onClick={updateItem} disabled={formSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={updateItem} disabled={formSubmitting} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Changes
             </Button>

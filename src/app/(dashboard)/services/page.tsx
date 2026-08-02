@@ -42,7 +42,7 @@ const serviceIcons: Record<string, string> = {
 };
 
 const serviceColors: Record<string, string> = {
-  Color: "bg-violet-50 text-violet-600",
+  Color: "bg-primary-50 text-primary",
   Cut: "bg-sky-50 text-sky-600",
   Beauty: "bg-pink-50 text-pink-600",
   Nails: "bg-emerald-50 text-emerald-600",
@@ -140,7 +140,7 @@ export default function ServicesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -152,14 +152,14 @@ export default function ServicesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Services</h1>
           <p className="text-gray-500">Manage your salon services and pricing</p>
         </div>
-        <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+        <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
           <Plus className="h-4 w-4" /> Add Service
         </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Services", value: String(stats.total || services.length), icon: Scissors, bg: "bg-violet-50", iconColor: "text-violet-600" },
+          { label: "Total Services", value: String(stats.total || services.length), icon: Scissors, bg: "bg-primary-50", iconColor: "text-primary" },
           { label: "Most Popular", value: stats.mostPopular || "N/A", icon: Star, bg: "bg-amber-50", iconColor: "text-amber-600" },
           { label: "Avg. Price", value: stats.avgPrice || "$0", icon: DollarSign, bg: "bg-emerald-50", iconColor: "text-emerald-600" },
           { label: "Avg. Duration", value: stats.avgDuration || "0m", icon: Clock, bg: "bg-sky-50", iconColor: "text-sky-600" },
@@ -195,7 +195,7 @@ export default function ServicesPage() {
               onClick={() => setSelectedCategory(cat)}
               className={`px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-white"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -222,7 +222,7 @@ export default function ServicesPage() {
                   <h3 className="font-semibold text-[15px] text-gray-900">{service.name}</h3>
                   <Badge variant="secondary" className="text-[11px] mt-1 bg-gray-100 text-gray-600">{service.category}</Badge>
                 </div>
-                <p className="text-2xl font-bold text-violet-600">{service.price}</p>
+                <p className="text-2xl font-bold text-primary">{service.price}</p>
               </div>
               <p className="text-[13px] text-gray-500 mb-4">{service.description}</p>
               <div className="flex items-center gap-4 text-[13px] text-gray-500">
@@ -289,7 +289,7 @@ export default function ServicesPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl cursor-pointer">Cancel</Button>
-            <Button onClick={createService} disabled={formSubmitting || !createForm.name} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={createService} disabled={formSubmitting || !createForm.name} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Service
             </Button>
@@ -344,7 +344,7 @@ export default function ServicesPage() {
             <Button variant="outline" onClick={() => deleteService(selectedService?.id)} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer">
               <Trash2 className="h-4 w-4" /> Delete
             </Button>
-            <Button onClick={updateService} disabled={formSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={updateService} disabled={formSubmitting} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Changes
             </Button>

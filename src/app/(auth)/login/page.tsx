@@ -3,8 +3,9 @@
 import { Suspense, useState } from "react";
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { login } from "@/lib/actions/auth";
-import { Sparkles, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -26,7 +27,6 @@ function LoginForm() {
 
   return (
     <>
-      {/* Demo buttons */}
       <div className="flex gap-2 mb-5">
         <button
           type="button"
@@ -52,7 +52,7 @@ function LoginForm() {
         )}
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-normal text-gray-500">
+          <label className="text-[11px] font-normal text-gray-500 tracking-normal">
             Email
           </label>
           <input
@@ -63,7 +63,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full bg-white border-[1.5px] border-gray-200 rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-gray-50/50 placeholder:text-gray-400"
+            className="w-full bg-white border-[1.5px] border-border-subtle rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-foreground-1 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-surface-1 placeholder:text-gray-400"
           />
           {state?.errors?.email && (
             <p className="text-xs text-red-500 mt-0.5">{state.errors.email[0]}</p>
@@ -71,7 +71,7 @@ function LoginForm() {
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-normal text-gray-500">
+          <label className="text-[11px] font-normal text-gray-500 tracking-normal">
             Password
           </label>
           <div className="relative">
@@ -83,7 +83,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full bg-white border-[1.5px] border-gray-200 rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-gray-900 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-gray-50/50 placeholder:text-gray-400 pr-10"
+              className="w-full bg-white border-[1.5px] border-border-subtle rounded-[10px] px-3.5 py-2.5 text-[13.5px] text-foreground-1 outline-none transition-all hover:border-gray-300 focus:border-gray-300 focus:bg-surface-1 placeholder:text-gray-400 pr-10"
             />
             <button
               type="button"
@@ -124,21 +124,26 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center bg-[#f8fafc] py-12">
-      {/* Decorative gradient blobs */}
+      {/* Decorative gradient blobs - matching target's navy/purple/blue palette */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-purple-400/20 to-purple-600/20 blur-[100px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tl from-violet-600/20 to-blue-500/20 blur-[100px]" />
+        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-primary-400/20 to-purple-400/20 blur-[100px]" />
+        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tl from-primary-600/20 to-blue-500/20 blur-[100px]" />
       </div>
 
       {/* Logo & brand */}
-      <div className="relative z-10 flex flex-col items-center mb-8 gap-4">
+      <div className="relative z-10 flex flex-col items-center mb-8 gap-4 transition-all duration-700 ease-out translate-y-0 opacity-100">
         <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-purple-600">
-            <Sparkles className="h-5 w-5 text-white" />
-          </div>
+          <Image
+            src="/logo.jpeg"
+            alt="Muvi Salon Logo"
+            className="h-10 w-auto object-contain"
+            width={40}
+            height={40}
+            priority
+          />
         </div>
         <span className="text-2xl font-black text-[#2D3142] tracking-tight">
-          Glamour Salon
+          Muvi Salon
         </span>
       </div>
 

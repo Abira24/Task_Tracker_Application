@@ -34,14 +34,14 @@ import {
 
 const statusStyles: Record<string, { badge: string; label: string }> = {
   vip: { badge: "bg-amber-50 text-amber-700", label: "VIP" },
-  regular: { badge: "bg-violet-50 text-violet-700", label: "Regular" },
+  regular: { badge: "bg-primary-50 text-primary-700", label: "Regular" },
   new: { badge: "bg-sky-50 text-sky-700", label: "New" },
   inactive: { badge: "bg-gray-100 text-gray-600", label: "Inactive" },
 };
 
 const colorMap: Record<string, string> = {
   vip: "bg-amber-50 text-amber-600",
-  regular: "bg-violet-50 text-violet-600",
+  regular: "bg-primary-50 text-primary",
   new: "bg-sky-50 text-sky-600",
   inactive: "bg-gray-100 text-gray-600",
 };
@@ -134,7 +134,7 @@ export default function CustomersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin h-8 w-8 border-4 border-violet-600 border-t-transparent rounded-full" />
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
@@ -160,7 +160,7 @@ export default function CustomersPage() {
           }}>
             <Download className="h-4 w-4" /> Export
           </Button>
-          <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+          <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
             <UserPlus className="h-4 w-4" /> Add Customer
           </Button>
         </div>
@@ -168,7 +168,7 @@ export default function CustomersPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Customers", value: String(customers.length), change: "+12%", bg: "bg-violet-50" },
+          { label: "Total Customers", value: String(customers.length), change: "+12%", bg: "bg-primary-50" },
           { label: "VIP Customers", value: String(stats.vip || 0), change: "+5%", bg: "bg-amber-50" },
           { label: "Avg. Visit Frequency", value: `${stats.avgVisits || 0}x`, change: "+0.3", bg: "bg-sky-50" },
           { label: "Avg. Spend", value: stats.avgSpend || "$0", change: "+8%", bg: "bg-emerald-50" },
@@ -202,7 +202,7 @@ export default function CustomersPage() {
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-xl text-[13px] font-medium transition-colors cursor-pointer ${
                 filter === f
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-white"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700 hover:bg-gray-200"
               }`}
             >
@@ -312,7 +312,7 @@ export default function CustomersPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setShowCreateDialog(false)} className="rounded-xl cursor-pointer">Cancel</Button>
-            <Button onClick={createCustomer} disabled={formSubmitting || !createForm.name} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+            <Button onClick={createCustomer} disabled={formSubmitting || !createForm.name} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
               {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
               Save Customer
             </Button>
@@ -353,7 +353,7 @@ export default function CustomersPage() {
                 <Button variant="outline" onClick={() => deleteCustomer(selectedCustomer.id)} className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer">
                   <Trash2 className="h-4 w-4" /> Delete
                 </Button>
-                <Button onClick={updateCustomer} disabled={formSubmitting} className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl cursor-pointer">
+                <Button onClick={updateCustomer} disabled={formSubmitting} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
                   {formSubmitting && <Loader2 className="h-4 w-4 animate-spin mr-1" />}
                   Save Changes
                 </Button>
