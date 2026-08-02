@@ -124,25 +124,28 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <div className="min-h-screen relative flex flex-col items-center justify-center bg-[#f8fafc] py-12">
-      {/* Decorative gradient blobs - matching target's navy/purple/blue palette */}
+      {/* Decorative gradient blobs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-15%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-br from-primary-400/20 to-purple-400/20 blur-[100px]" />
-        <div className="absolute bottom-[-15%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tl from-primary-600/20 to-blue-500/20 blur-[100px]" />
+        <div className="absolute top-[-20%] left-[-15%] w-[60%] h-[60%] rounded-full bg-gradient-to-br from-primary/25 via-purple-400/20 to-fuchsia-400/15 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-15%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-primary/20 via-violet-500/15 to-blue-400/10 blur-[120px]" />
+        <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] rounded-full bg-gradient-to-br from-purple-400/10 to-primary/10 blur-[80px]" />
       </div>
 
       {/* Logo & brand */}
       <div className="relative z-10 flex flex-col items-center mb-8 gap-4 transition-all duration-700 ease-out translate-y-0 opacity-100">
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
-          <Image
-            src="/logo.jpeg"
-            alt="Muvi Salon Logo"
-            className="h-10 w-auto object-contain"
-            width={40}
-            height={40}
-            priority
-          />
+        <div className="gradient-primary p-[3px] rounded-3xl shadow-lg shadow-primary/20">
+          <div className="bg-white rounded-[21px] p-1">
+            <Image
+              src="/logo.jpeg"
+              alt="Muvi Salon Logo"
+              className="h-16 w-16 rounded-[18px] object-cover"
+              width={64}
+              height={64}
+              priority
+            />
+          </div>
         </div>
-        <span className="text-2xl font-black text-[#2D3142] tracking-tight">
+        <span className="text-3xl font-black text-primary tracking-tight">
           Muvi Salon
         </span>
       </div>
@@ -151,10 +154,10 @@ export default function LoginPage() {
       <div className="relative z-10 w-full flex justify-center">
         <div className="w-full max-w-md px-4">
           <div
-            className="flex flex-col relative overflow-hidden border-none w-full p-8 rounded-[24px] bg-white/80 backdrop-blur-xl border border-white/60 ring-1 ring-gray-900/5"
+            className="flex flex-col relative overflow-hidden border-none w-full p-8 rounded-[24px] bg-white/80 backdrop-blur-xl border border-white/60 ring-1 ring-primary/10"
             style={{
               boxShadow:
-                "0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                "0 10px 25px -5px rgba(190, 46, 214, 0.1), 0 8px 10px -6px rgba(190, 46, 214, 0.05)",
             }}
           >
             <div className="text-center mb-8">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -70,9 +71,12 @@ const priorityConfig: Record<Priority, { color: string; badge: string; icon: Rea
   urgent: { color: "text-red-600", badge: "bg-red-50 text-red-700", icon: AlertCircle },
 };
 
-export default function TasksPage() {
+function TasksContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
+
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [filterPriority, setFilterPriority] = useState<Priority | "all">("all");
   const [loading, setLoading] = useState(true);
 
@@ -94,6 +98,10 @@ export default function TasksPage() {
   };
 
   useEffect(loadTasks, []);
+
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
 
   const toggleComplete = async (id: any) => {
     const task = tasks.find((t: any) => t.id === id);
@@ -465,5 +473,13 @@ export default function TasksPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <TasksContent />
+    </Suspense>
   );
 }

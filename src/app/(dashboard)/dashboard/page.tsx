@@ -357,7 +357,7 @@ export default function DashboardPage() {
                   key={customer.name}
                   className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white font-bold text-[11px]">
+                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary-500 to-purple-500 text-white font-bold text-[11px]">
                     {customer.name.split(" ").map((n: string) => n[0]).join("")}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -384,36 +384,36 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={openAppointmentDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-primary-50 hover:border-primary-200 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 cursor-pointer"
               >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-sm">
                   <Calendar className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">Book Appointment</span>
               </button>
               <button
                 onClick={openCustomerDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-blue-50 hover:border-blue-200 hover:shadow-md hover:shadow-blue/10 transition-all duration-200 cursor-pointer"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-50 text-blue-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm">
                   <Users className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">Add Customer</span>
               </button>
               <button
                 onClick={openServiceDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-purple-50 hover:border-purple-200 hover:shadow-md hover:shadow-purple/10 transition-all duration-200 cursor-pointer"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-50 text-primary">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-sm">
                   <Scissors className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">Add Service</span>
               </button>
               <button
                 onClick={() => router.push("/analytics")}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all cursor-pointer"
+                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald/10 transition-all duration-200 cursor-pointer"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm">
                   <TrendingUp className="h-5 w-5" />
                 </div>
                 <span className="text-[12px] font-semibold text-gray-700">View Reports</span>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -51,11 +52,14 @@ const serviceColors: Record<string, string> = {
   Special: "bg-rose-50 text-rose-600",
 };
 
-export default function ServicesPage() {
+function ServicesContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
+
   const [services, setServices] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>(["All"]);
   const [stats, setStats] = useState<any>({});
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
 
@@ -81,6 +85,10 @@ export default function ServicesPage() {
   };
 
   useEffect(loadServices, []);
+
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
 
   const filtered = services.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -352,5 +360,13 @@ export default function ServicesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function ServicesPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <ServicesContent />
+    </Suspense>
   );
 }

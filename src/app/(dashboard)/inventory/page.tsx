@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -39,10 +40,13 @@ const statusConfig: Record<string, { badge: string; label: string }> = {
   "out-of-stock": { badge: "bg-gray-100 text-gray-600", label: "Out of Stock" },
 };
 
-export default function InventoryPage() {
+function InventoryContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
+
   const [items, setItems] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [loading, setLoading] = useState(true);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -66,6 +70,10 @@ export default function InventoryPage() {
   };
 
   useEffect(loadItems, []);
+
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
 
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -382,5 +390,13 @@ export default function InventoryPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function InventoryPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <InventoryContent />
+    </Suspense>
   );
 }

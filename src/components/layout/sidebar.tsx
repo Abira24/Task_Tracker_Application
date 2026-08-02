@@ -64,22 +64,24 @@ export function Sidebar() {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-100">
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-sm border border-gray-100 overflow-hidden shrink-0">
-          <Image
-            src="/logo.jpeg"
-            alt="Muvi Salon Logo"
-            className="w-full h-full object-contain"
-            width={36}
-            height={36}
-            priority
-          />
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl gradient-primary shadow-md overflow-hidden shrink-0 p-0.5">
+          <div className="w-full h-full rounded-[10px] bg-white flex items-center justify-center overflow-hidden">
+            <Image
+              src="/logo.jpeg"
+              alt="Muvi Salon Logo"
+              className="w-full h-full object-cover"
+              width={44}
+              height={44}
+              priority
+            />
+          </div>
         </div>
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="font-bold text-gray-900 text-[15px] leading-tight tracking-tight">
+            <span className="font-bold text-gray-900 text-[16px] leading-tight tracking-tight">
               Muvi
             </span>
-            <span className="text-[10px] text-gray-400 font-medium tracking-wider uppercase">
+            <span className="text-[10px] text-primary font-semibold tracking-wider uppercase">
               Salon
             </span>
           </div>
@@ -97,7 +99,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
                 active
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/5 text-primary shadow-sm"
                   : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               )}
               title={collapsed ? item.title : undefined}
@@ -130,8 +132,8 @@ export function Sidebar() {
             collapsed ? "justify-center" : ""
           )}
         >
-          <Avatar className="h-9 w-9">
-            <AvatarFallback className="bg-gradient-to-br from-primary-500 to-primary-600 text-white text-xs font-bold">
+          <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+            <AvatarFallback className="bg-gradient-to-br from-primary-400 via-primary-500 to-purple-600 text-white text-xs font-bold">
               {initials}
             </AvatarFallback>
           </Avatar>

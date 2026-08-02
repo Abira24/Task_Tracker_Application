@@ -7,7 +7,7 @@
   --card-foreground: #1e293b;
   --popover: #ffffff;
   --popover-foreground: #1e293b;
-  --primary: #363c51;
+  --primary: #be2ed6;
   --primary-foreground: #ffffff;
   --secondary: #f1f5f9;
   --secondary-foreground: #475569;
@@ -19,7 +19,7 @@
   --destructive-foreground: #ffffff;
   --border: #e2e8f0;
   --input: #e2e8f0;
-  --ring: #363c51;
+  --ring: #be2ed6;
   --radius: 0.75rem;
   --sidebar-bg: #ffffff;
   --sidebar-fg: #1e293b;
@@ -51,15 +51,15 @@
   --color-sidebar-fg: var(--sidebar-fg);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-muted: var(--sidebar-muted);
-  --color-primary-50: #f4f5f7;
-  --color-primary-100: #e4e6ec;
-  --color-primary-200: #c6c9d6;
-  --color-primary-300: #9da3b9;
-  --color-primary-400: #6f7895;
-  --color-primary-500: #363c51;
-  --color-primary-600: #2b3041;
-  --color-primary-700: #1f232f;
-  --color-primary-800: #12151d;
+  --color-primary-50: #fdf4ff;
+  --color-primary-100: #fae8ff;
+  --color-primary-200: #f5d0fe;
+  --color-primary-300: #f0abfc;
+  --color-primary-400: #e879f9;
+  --color-primary-500: #be2ed6;
+  --color-primary-600: #a025b8;
+  --color-primary-700: #821e96;
+  --color-primary-800: #5c1569;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -115,4 +115,16 @@ body {
 }
 .animate-fade-in {
   animation: 0.3s ease-out forwards fade-in;
+}
+
+.gradient-primary {
+  background: linear-gradient(135deg, #be2ed6 0%, #9b30ff 50%, #7c3aed 100%);
+}
+
+.gradient-primary-subtle {
+  background: linear-gradient(135deg, rgba(190, 46, 214, 0.08) 0%, rgba(155, 48, 255, 0.08) 50%, rgba(124, 58, 237, 0.08) 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, rgba(190, 46, 214, 0.15) 0%, rgba(124, 58, 237, 0.1) 50%, rgba(59, 130, 246, 0.08) 100%);
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Plus,
   Search,
@@ -46,10 +47,12 @@ const colorMap: Record<string, string> = {
   inactive: "bg-gray-100 text-gray-600",
 };
 
-export default function CustomersPage() {
+function CustomersContent() {
+  const searchParams = useSearchParams();
+  const urlSearch = searchParams.get("search") || "";
   const [customers, setCustomers] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
 
@@ -74,10 +77,16 @@ export default function CustomersPage() {
 
   useEffect(loadCustomers, []);
 
+  useEffect(() => {
+    setSearchTerm(urlSearch);
+  }, [urlSearch]);
+
   const filtered = customers.filter((c) => {
+    const q = searchTerm.toLowerCase();
     const matchesSearch =
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchTerm.toLowerCase());
+      c.name.toLowerCase().includes(q) ||
+      c.email.toLowerCase().includes(q) ||
+      (c.phone && c.phone.toLowerCase().includes(q));
     const matchesFilter = filter === "all" || c.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -363,5 +372,13 @@ export default function CustomersPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export default function CustomersPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+      <CustomersContent />
+    </Suspense>
   );
 }
