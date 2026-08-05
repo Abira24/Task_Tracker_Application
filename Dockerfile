@@ -10,11 +10,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN --mount=type=secret,id=database_url,env=DATABASE_URL \
-    --mount=type=secret,id=nextauth_url,env=NEXTAUTH_URL \
-    --mount=type=secret,id=nextauth_secret,env=NEXTAUTH_SECRET \
-    npx prisma generate && \
-    npm run build
+RUN npm run build
 
 FROM base AS runner
 WORKDIR /app

@@ -27,26 +27,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Prepare build secrets
-        run: |
-          mkdir -p $HOME/.secrets
-          printf '%s' "${{ secrets.DATABASE_URL }}" > $HOME/.secrets/database_url
-          printf '%s' "${{ secrets.NEXTAUTH_URL }}" > $HOME/.secrets/nextauth_url
-          printf '%s' "${{ secrets.NEXTAUTH_SECRET }}" > $HOME/.secrets/nextauth_secret
-
       - name: Build Docker image
         run: |
-          docker build \
-            --secret id=database_url,src=$HOME/.secrets/database_url \
-            --secret id=nextauth_url,src=$HOME/.secrets/nextauth_url \
-            --secret id=nextauth_secret,src=$HOME/.secrets/nextauth_secret \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
-        env:
-          DOCKER_BUILDKIT: 1
-
-      - name: Clean up secrets
-        if: always()
-        run: rm -rf $HOME/.secrets
+          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
       - name: List Docker images
         run: docker images
