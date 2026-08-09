@@ -27,13 +27,20 @@ const statusConfig: Record<string, { label: string; color: string; bg: string }>
   cancelled: { label: "Cancelled", color: "text-red-600", bg: "bg-red-50" },
 };
 
+const monthAbbrevToNum: Record<string, string> = {
+  Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
+  Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
+};
+
 export default function ReportsPage() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
-  const fetchData = useCallback(() => {
-    fetch("/api/analytics")
+  const fetchData = useCallback((month?: string) => {
+    const url = month ? `/api/analytics?month=${month}` : "/api/analytics";
+    fetch(url)
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)
@@ -41,13 +48,17 @@ export default function ReportsPage() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    fetchData(selectedMonth || undefined);
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") fetchData();
+      if (document.visibilityState === "visible") fetchData(selectedMonth || undefined);
     };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [fetchData]);
+  }, [fetchData, selectedMonth]);
+
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+  };
 
   const exportDailySummary = () => {
     if (!data?.daily) return;
@@ -317,31 +328,78 @@ export default function ReportsPage() {
       {/* Revenue Trend + Service Mix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 border-gray-100 shadow-sm rounded-xl">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="flex items-center gap-2 text-[15px] font-semibold text-gray-900">
               <TrendingUp className="h-5 w-5 text-primary" />
               Revenue Trend
             </CardTitle>
+            <div className="flex items-center gap-2">
+              <select
+                value={selectedMonth}
+                onChange={(e) => handleMonthChange(e.target.value)}
+                className="text-[12px] font-medium border border-gray-200 rounded-lg px-3 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer"
+              >
+                <option value="">All Months</option>
+                {revenueData.map((rd: any) => (
+                  <option key={rd.month} value={`${new Date().getFullYear()}-${monthAbbrevToNum[rd.month] || "01"}`}>
+                    {rd.month}
+                  </option>
+                ))}
+              </select>
+              {selectedMonth && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedMonth("")}
+                  className="text-[12px] text-gray-500 hover:text-gray-700 h-7 cursor-pointer"
+                >
+                  Clear
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {revenueData.map((rd: any) => (
-                <div key={rd.month} className="flex items-center gap-3">
-                  <span className="w-8 text-[12px] text-gray-500 font-medium">{rd.month}</span>
-                  <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
-                      style={{ width: `${Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100)}%` }}
-                    >
-                      <span className="text-[10px] font-bold text-white">
-                        ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
-                      </span>
+            {selectedMonth && data?.dailyRevenueData ? (
+              <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                {data.dailyRevenueData.map((rd: any) => (
+                  <div key={rd.day} className="flex items-center gap-3">
+                    <span className="w-12 text-[11px] text-gray-500 font-medium">{rd.label}</span>
+                    <div className="flex-1 h-5 bg-gray-100 rounded-lg overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                        style={{ width: `${rd.revenue > 0 ? Math.min((rd.revenue / Math.max(...data.dailyRevenueData.map((r: any) => r.revenue || 1))) * 100, 100) : 0}%` }}
+                      >
+                        {rd.revenue > 0 && (
+                          <span className="text-[9px] font-bold text-white">
+                            ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                    <span className="w-12 text-[10px] text-gray-500 text-right">{rd.appointments} appts</span>
                   </div>
-                  <span className="w-16 text-[11px] text-gray-500 text-right">{rd.appointments} appts</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {revenueData.map((rd: any) => (
+                  <div key={rd.month} className="flex items-center gap-3">
+                    <span className="w-8 text-[12px] text-gray-500 font-medium">{rd.month}</span>
+                    <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
+                      <div
+                        className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                        style={{ width: `${Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100)}%` }}
+                      >
+                        <span className="text-[10px] font-bold text-white">
+                          ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="w-16 text-[11px] text-gray-500 text-right">{rd.appointments} appts</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 

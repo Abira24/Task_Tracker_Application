@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/role-guard";
 
@@ -7,11 +7,12 @@ function todayStr() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const auth = await requireAdmin();
   if (auth.error) return auth.error;
   try {
     const today = todayStr();
+    const selectedMonth = request.nextUrl.searchParams.get("month");
 
     const [totalRevenue] = await query<any[]>(
       "SELECT COALESCE(SUM(s.price), 0) as total FROM Appointment a JOIN Service s ON a.serviceId = s.id WHERE a.status != 'cancelled'"
@@ -25,15 +26,44 @@ export async function GET() {
       "SELECT COUNT(*) as count FROM Customer"
     );
 
-    const revenueData = await query<any[]>(
-      `SELECT DATE_FORMAT(a.date, '%b') as month,
-              COALESCE(SUM(s.price), 0) as revenue,
-              COUNT(a.id) as appointments
-       FROM Appointment a JOIN Service s ON a.serviceId = s.id
-       WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-       GROUP BY DATE_FORMAT(a.date, '%Y-%m'), DATE_FORMAT(a.date, '%b')
-       ORDER BY MIN(a.date)`
-    );
+    let revenueData;
+    let monthlyRevenueData;
+
+    if (selectedMonth) {
+      // Daily revenue for selected month (format: YYYY-MM)
+      revenueData = await query<any[]>(
+        `SELECT DAY(a.date) as day,
+                COALESCE(SUM(s.price), 0) as revenue,
+                COUNT(a.id) as appointments
+         FROM Appointment a JOIN Service s ON a.serviceId = s.id
+         WHERE DATE_FORMAT(a.date, '%Y-%m') = ? AND a.status != 'cancelled'
+         GROUP BY DAY(a.date)
+         ORDER BY day`,
+        [selectedMonth]
+      );
+      // Also get the monthly totals for the selector display
+      monthlyRevenueData = await query<any[]>(
+        `SELECT DATE_FORMAT(a.date, '%b') as month,
+                COALESCE(SUM(s.price), 0) as revenue,
+                COUNT(a.id) as appointments
+         FROM Appointment a JOIN Service s ON a.serviceId = s.id
+         WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+         GROUP BY DATE_FORMAT(a.date, '%Y-%m'), DATE_FORMAT(a.date, '%b')
+         ORDER BY MIN(a.date)`
+      );
+    } else {
+      // Monthly revenue for last 6 months (default)
+      revenueData = await query<any[]>(
+        `SELECT DATE_FORMAT(a.date, '%b') as month,
+                COALESCE(SUM(s.price), 0) as revenue,
+                COUNT(a.id) as appointments
+         FROM Appointment a JOIN Service s ON a.serviceId = s.id
+         WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+         GROUP BY DATE_FORMAT(a.date, '%Y-%m'), DATE_FORMAT(a.date, '%b')
+         ORDER BY MIN(a.date)`
+      );
+      monthlyRevenueData = revenueData;
+    }
 
     const serviceBreakdown = await query<any[]>(
       `SELECT s.name, COUNT(a.id) as count, COALESCE(SUM(s.price), 0) as revenue
@@ -70,13 +100,34 @@ export async function GET() {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentMonth = new Date().getMonth();
     const fullRevenueData = months.slice(0, currentMonth + 1).map((month) => {
-      const found = revenueData.find((r: any) => r.month === month);
+      const found = (monthlyRevenueData || revenueData).find((r: any) => r.month === month);
       return {
         month,
         revenue: found ? Number(found.revenue) : 0,
         appointments: found ? Number(found.appointments) : 0,
       };
     });
+
+    // Build daily revenue data for selected month
+    const dailyRevenueData = selectedMonth
+      ? (() => {
+          const [, yearStr, monthNumStr] = selectedMonth.match(/^(\d{4})-(\d{2})$/) || [];
+          if (!yearStr || !monthNumStr) return [];
+          const year = Number(yearStr);
+          const monthNum = Number(monthNumStr);
+          const daysInMonth = new Date(year, monthNum, 0).getDate();
+          return Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
+            const found = revenueData.find((r: any) => r.day === day);
+            return {
+              day,
+              label: `${monthNumStr}-${String(day).padStart(2, "0")}`,
+              revenue: found ? Number(found.revenue) : 0,
+              appointments: found ? Number(found.appointments) : 0,
+            };
+          });
+        })()
+      : [];
 
     const topStylists = await query<any[]>(
       `SELECT st.name, st.color, COALESCE(SUM(s.price), 0) as revenue, COUNT(a.id) as appointments
@@ -151,6 +202,8 @@ export async function GET() {
         customers: customersCount?.count || 0,
       },
       revenueData: fullRevenueData,
+      dailyRevenueData,
+      selectedMonth,
       serviceBreakdown: breakdownMapped,
       peakHours,
       topStylists: stylistMapped,
