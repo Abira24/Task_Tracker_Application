@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       else if (hourNum < 12) label = `${hourNum} AM`;
       else if (hourNum === 12) label = "12 PM";
       else label = `${hourNum - 12} PM`;
-      return { hour: label, percentage: Math.round((h.count / maxCount) * 100) };
+      return { hour: label, count: h.count, percentage: Math.round((h.count / maxCount) * 100) };
     });
 
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

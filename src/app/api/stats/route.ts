@@ -64,11 +64,15 @@ export async function GET(request: NextRequest) {
     const todayAppointments = await query<any[]>(
       stylistId
         ? `SELECT a.id, c.name as client, s.name as service, a.startTime as time, a.endTime, st.name as stylist, a.status,
-                  s.duration, CONCAT(FLOOR(s.duration/60), 'h ', s.duration%60, 'm') as durationStr
+                  TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p')) as durationMin,
+                  CONCAT(FLOOR(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p'))/60), 'h ',
+                         TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p'))%60, 'm') as durationStr
            FROM Appointment a JOIN Customer c ON a.customerId = c.id JOIN Service s ON a.serviceId = s.id JOIN Stylist st ON a.stylistId = st.id
            WHERE DATE(a.date) = CURDATE() AND a.stylistId = ? ORDER BY a.startTime LIMIT 5`
         : `SELECT a.id, c.name as client, s.name as service, a.startTime as time, a.endTime, st.name as stylist, a.status,
-                  s.duration, CONCAT(FLOOR(s.duration/60), 'h ', s.duration%60, 'm') as durationStr
+                  TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p')) as durationMin,
+                  CONCAT(FLOOR(TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p'))/60), 'h ',
+                         TIMESTAMPDIFF(MINUTE, STR_TO_DATE(a.startTime, '%h:%i %p'), STR_TO_DATE(a.endTime, '%h:%i %p'))%60, 'm') as durationStr
            FROM Appointment a JOIN Customer c ON a.customerId = c.id JOIN Service s ON a.serviceId = s.id JOIN Stylist st ON a.stylistId = st.id
            WHERE DATE(a.date) = CURDATE() ORDER BY a.startTime LIMIT 5`,
       stylistId ? [stylistId] : []
@@ -110,6 +114,7 @@ export async function GET(request: NextRequest) {
         client: a.client,
         service: a.service,
         time: a.time,
+        endTime: a.endTime,
         stylist: a.stylist,
         status: a.status,
         duration: a.durationStr,

@@ -375,6 +375,20 @@ export default function AppointmentsPage() {
                   })() : ""
                 } />
                 <InfoRow icon={<Clock className="h-4 w-4 text-gray-400" />} label="Time" value={`${to12h(selectedApt.startTime)} – ${to12h(selectedApt.endTime)}`} />
+                {selectedApt.startTime && selectedApt.endTime && (() => {
+                  const toMin = (t: string) => {
+                    const [time, period] = t.split(" ");
+                    let [h, m] = time.split(":").map(Number);
+                    if (period === "PM" && h !== 12) h += 12;
+                    if (period === "AM" && h === 12) h = 0;
+                    return h * 60 + m;
+                  };
+                  const diff = toMin(selectedApt.endTime) - toMin(selectedApt.startTime);
+                  const hrs = Math.floor(diff / 60);
+                  const mins = diff % 60;
+                  const label = hrs > 0 && mins > 0 ? `${hrs}h ${mins}m` : hrs > 0 ? `${hrs}h` : `${mins}m`;
+                  return <InfoRow icon={<Clock className="h-4 w-4 text-gray-400" />} label="Duration" value={label} />;
+                })()}
                 {selectedApt.price != null && (
                   <InfoRow icon={<span className="text-gray-400 text-[13px] font-bold">$</span>} label="Price" value={`$${selectedApt.price}`} />
                 )}

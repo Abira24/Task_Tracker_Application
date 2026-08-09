@@ -440,6 +440,7 @@ export default function ReportsPage() {
                       }}
                     />
                   </div>
+                  <span className="w-16 text-[11px] text-gray-500 text-right">{hour.count} appts</span>
                   <span className="w-8 text-[11px] font-medium text-gray-900 text-right">{hour.percentage}%</span>
                 </div>
               ))}
