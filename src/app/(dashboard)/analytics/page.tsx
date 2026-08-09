@@ -364,18 +364,13 @@ export default function ReportsPage() {
                 {data.dailyRevenueData.map((rd: any) => (
                   <div key={rd.day} className="flex items-center gap-3">
                     <span className="w-12 text-[11px] text-gray-500 font-medium">{rd.label}</span>
-                    <div className="flex-1 h-5 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="flex-1 h-5 bg-gray-100 rounded-lg overflow-hidden relative">
                       <div
-                        className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
+                        className="h-full bg-primary rounded-lg transition-all duration-500"
                         style={{ width: `${rd.revenue > 0 ? Math.min((rd.revenue / Math.max(...data.dailyRevenueData.map((r: any) => r.revenue || 1))) * 100, 100) : 0}%` }}
-                      >
-                        {rd.revenue > 0 && (
-                          <span className="text-[9px] font-bold text-white">
-                            ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
-                          </span>
-                        )}
-                      </div>
+                      />
                     </div>
+                    <span className="w-14 text-[11px] font-semibold text-gray-900 text-right">${rd.revenue.toLocaleString()}</span>
                     <span className="w-12 text-[10px] text-gray-500 text-right">{rd.appointments} appts</span>
                   </div>
                 ))}
@@ -385,16 +380,13 @@ export default function ReportsPage() {
                 {revenueData.map((rd: any) => (
                   <div key={rd.month} className="flex items-center gap-3">
                     <span className="w-8 text-[12px] text-gray-500 font-medium">{rd.month}</span>
-                    <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden">
+                    <div className="flex-1 h-7 bg-gray-100 rounded-lg overflow-hidden relative">
                       <div
-                        className="h-full bg-primary rounded-lg flex items-center justify-end pr-2 transition-all duration-500"
-                        style={{ width: `${Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100)}%` }}
-                      >
-                        <span className="text-[10px] font-bold text-white">
-                          ${rd.revenue >= 1000 ? `${(rd.revenue / 1000).toFixed(1)}k` : rd.revenue}
-                        </span>
-                      </div>
+                        className="h-full bg-primary rounded-lg transition-all duration-500"
+                        style={{ width: `${rd.revenue > 0 ? Math.min((rd.revenue / Math.max(...revenueData.map((r: any) => r.revenue || 1))) * 100, 100) : 0}%` }}
+                      />
                     </div>
+                    <span className="w-16 text-[12px] font-semibold text-gray-900 text-right">${rd.revenue.toLocaleString()}</span>
                     <span className="w-16 text-[11px] text-gray-500 text-right">{rd.appointments} appts</span>
                   </div>
                 ))}
