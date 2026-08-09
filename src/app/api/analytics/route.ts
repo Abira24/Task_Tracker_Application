@@ -81,7 +81,8 @@ export async function GET(request: NextRequest) {
 
     const peakHoursData = await query<any[]>(
       `SELECT HOUR(STR_TO_DATE(startTime, '%h:%i %p')) as hour, COUNT(*) as count
-       FROM Appointment WHERE status != 'cancelled' AND startTime IS NOT NULL
+       FROM Appointment
+       WHERE status != 'cancelled' AND startTime IS NOT NULL AND startTime != ''
        GROUP BY HOUR(STR_TO_DATE(startTime, '%h:%i %p'))
        ORDER BY hour`
     );
@@ -131,9 +132,12 @@ export async function GET(request: NextRequest) {
 
     const topStylists = await query<any[]>(
       `SELECT st.name, st.color, COALESCE(SUM(s.price), 0) as revenue, COUNT(a.id) as appointments
-       FROM Stylist st LEFT JOIN Appointment a ON st.id = a.stylistId LEFT JOIN Service s ON a.serviceId = s.id
-       WHERE a.status != 'cancelled' OR a.status IS NULL
-       GROUP BY st.id ORDER BY revenue DESC LIMIT 5`
+       FROM Stylist st
+       INNER JOIN Appointment a ON st.id = a.stylistId AND a.status != 'cancelled'
+       INNER JOIN Service s ON a.serviceId = s.id
+       GROUP BY st.id
+       HAVING appointments > 0
+       ORDER BY revenue DESC LIMIT 5`
     );
 
     const stylistMapped = topStylists.map((s: any) => ({
