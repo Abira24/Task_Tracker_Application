@@ -1,30 +1,39 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  Calendar,
-  Plus,
-  Search,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  format,
+  addDays,
+  addWeeks,
+  addMonths,
+  subWeeks,
+  subMonths,
+  isSameDay,
+  isSameMonth,
+  isToday,
+  parseISO,
+  getHours,
+  getMinutes,
+} from "date-fns";
+import {
   ChevronLeft,
   ChevronRight,
+  Calendar as CalendarIcon,
   Clock,
   User,
   Scissors,
-  Trash2,
   X,
   Loader2,
-  CheckCircle2,
-  Filter,
-  LayoutList,
-  CalendarDays,
-  ChevronDown,
+  Plus,
+  Phone,
+  Mail,
+  StickyNote,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,21 +46,26 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 
-const timeSlots = [
-  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "12:00 PM", "12:30 PM", "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM",
-  "3:00 PM", "3:30 PM", "4:00 PM", "4:30 PM", "5:00 PM",
-];
-
-const statusConfig: Record<string, { label: string; color: string; dot: string }> = {
-  confirmed: { label: "Confirmed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  "in-progress": { label: "In Progress", color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-500" },
-  pending: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500" },
-  completed: { label: "Completed", color: "bg-primary-50 text-primary-700 border-primary-200", dot: "bg-primary" },
-  cancelled: { label: "Cancelled", color: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500" },
+const statusConfig: Record<string, { label: string; color: string; dot: string; bg: string }> = {
+  confirmed: { label: "Confirmed", color: "bg-emerald-50 text-emerald-700 border-emerald-200", dot: "bg-emerald-500", bg: "bg-emerald-500" },
+  "in-progress": { label: "In Progress", color: "bg-sky-50 text-sky-700 border-sky-200", dot: "bg-sky-500", bg: "bg-sky-500" },
+  pending: { label: "Pending", color: "bg-amber-50 text-amber-700 border-amber-200", dot: "bg-amber-500", bg: "bg-amber-500" },
+  completed: { label: "Completed", color: "bg-purple-50 text-purple-700 border-purple-200", dot: "bg-purple-500", bg: "bg-purple-500" },
+  cancelled: { label: "Cancelled", color: "bg-red-50 text-red-700 border-red-200", dot: "bg-red-500", bg: "bg-red-500" },
 };
 
-function to12h(time: string) {
+function to24h(time: string): string {
+  if (!time) return "09:00";
+  if (time.includes(":") && !time.includes("AM") && !time.includes("PM")) return time;
+  const [t, mod] = time.split(" ");
+  const [h, m] = t.split(":");
+  let hour = parseInt(h);
+  if (mod === "PM" && hour !== 12) hour += 12;
+  if (mod === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${m}`;
+}
+
+function to12h(time: string): string {
   if (!time) return "9:00 AM";
   if (time.includes("AM") || time.includes("PM")) return time;
   const [h, m] = time.split(":");
@@ -61,203 +75,102 @@ function to12h(time: string) {
   return `${h12}:${m} ${ampm}`;
 }
 
-function to24h(time: string) {
-  if (!time || time.includes(":")) {
-    if (time && !time.includes("AM") && !time.includes("PM")) return time;
-  }
-  const [t, mod] = time.split(" ");
-  let [h, m] = t.split(":");
-  let hour = parseInt(h);
-  if (mod === "PM" && hour !== 12) hour += 12;
-  if (mod === "AM" && hour === 12) hour = 0;
-  return `${String(hour).padStart(2, "0")}:${m}`;
+function toMinutes(time: string): number {
+  const t24 = to24h(time);
+  const [h, m] = t24.split(":").map(Number);
+  return h * 60 + m;
 }
 
-function toDateStr(d: Date) {
+function toDateStr(d: Date): string {
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-function formatSelectedDate(d: Date) {
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
+const HOURS = Array.from({ length: 12 }, (_, i) => i + 8);
 
-function AppointmentsContent() {
-  const searchParams = useSearchParams();
-  const urlSearch = searchParams.get("search") || "";
-
-  const [view, setView] = useState<"list" | "calendar">("list");
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+export default function AppointmentsPage() {
+  const [view, setView] = useState<"month" | "week" | "day">("month");
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [appointments, setAppointments] = useState<any[]>([]);
   const [stylists, setStylists] = useState<any[]>([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(urlSearch);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [userRole, setUserRole] = useState<string>("");
+  const [userStylistId, setUserStylistId] = useState<string | null>(null);
 
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
   const [selectedApt, setSelectedApt] = useState<any>(null);
+  const [showCreate, setShowCreate] = useState(false);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
   const [createForm, setCreateForm] = useState({
-    customerId: "", serviceId: "", stylistId: "",
+    customerId: "",
+    serviceId: "",
+    stylistId: "",
     date: toDateStr(new Date()),
-    startTime: "09:00", endTime: "10:00",
+    startTime: "09:00",
+    endTime: "10:00",
   });
 
-  const loadAppointments = () => {
-    fetch("/api/appointments")
+  const isAdmin = userRole === "admin";
+
+  const loadData = useCallback(() => {
+    fetch("/api/auth/me")
       .then((r) => r.json())
+      .then((userData) => {
+        const role = userData.user?.role || "";
+        const sid = userData.user?.stylistId || null;
+        setUserRole(role);
+        setUserStylistId(sid);
+        const params = sid ? `?stylistId=${sid}` : "";
+        return fetch(`/api/appointments${params}`).then((r) => r.json());
+      })
       .then((data) => {
         setAppointments(data.appointments || []);
         setStylists(data.stylists || []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const mappedApts = useMemo(() =>
+    appointments.map((a: any) => ({
+      ...a,
+      dateStr: a.date ? toDateStr(new Date(a.date)) : "",
+      startMin: toMinutes(a.startTime),
+      endMin: toMinutes(a.endTime),
+      stylistColor: a.stylistColor || "#8b5cf6",
+    })),
+    [appointments]
+  );
+
+  const getAptsForDate = useCallback((d: Date) => {
+    const ds = toDateStr(d);
+    return mappedApts.filter((a) => a.dateStr === ds);
+  }, [mappedApts]);
+
+  const navigatePrev = () => {
+    if (view === "month") setCurrentDate(subMonths(currentDate, 1));
+    else if (view === "week") setCurrentDate(subWeeks(currentDate, 1));
+    else setCurrentDate(addDays(currentDate, -1));
   };
 
-  useEffect(loadAppointments, []);
-
-  useEffect(() => {
-    setSearchTerm(urlSearch);
-  }, [urlSearch]);
-
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
-  const isViewingToday = toDateStr(selectedDate) === toDateStr(now);
-
-  const today = new Date();
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - today.getDay() + weekOffset * 7);
-  const daysInWeek = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    return d;
-  });
-
-  const isToday = (d: Date) => toDateStr(d) === toDateStr(today);
-  const isSelected = (d: Date) => toDateStr(d) === toDateStr(selectedDate);
-
-  const selectedDateStr = toDateStr(selectedDate);
-
-  const mappedAppointments = appointments.map((a: any) => ({
-    id: a.id,
-    client: a.client,
-    clientEmail: a.clientEmail,
-    clientPhone: a.clientPhone,
-    service: a.service,
-    date: a.date ? toDateStr(new Date(a.date)) : "",
-    time: a.startTime,
-    endTime: a.endTime,
-    stylist: a.stylist,
-    status: a.status,
-    price: a.price,
-    duration: a.duration,
-    color: a.stylistColor || "#8b5cf6",
-  }));
-
-  const dayAppointments = mappedAppointments.filter((a) => a.date === selectedDateStr);
-
-  const filteredAppointments = dayAppointments.filter((a) => {
-    const matchesSearch = !searchTerm || (
-      a.client?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.service?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.stylist?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const matchesStatus = statusFilter === "all" || a.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const displayStylists = stylists.length > 0 ? stylists : [
-    { id: "1", name: "Emma Wilson", color: "#8b5cf6" },
-    { id: "2", name: "James Brown", color: "#0ea5e9" },
-    { id: "3", name: "Sophia Lee", color: "#ec4899" },
-    { id: "4", name: "Mia Garcia", color: "#10b981" },
-  ];
-
-  const getStylistColor = (stylistName: string) => {
-    const s = displayStylists.find((st: any) => st.name === stylistName);
-    return s?.color || "#8b5cf6";
+  const navigateNext = () => {
+    if (view === "month") setCurrentDate(addMonths(currentDate, 1));
+    else if (view === "week") setCurrentDate(addWeeks(currentDate, 1));
+    else setCurrentDate(addDays(currentDate, 1));
   };
 
-  const navigateDate = (offset: number) => {
-    const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + offset);
-    setSelectedDate(newDate);
-    const newDay = newDate.getDay();
-    const newWeekStart = new Date(today);
-    newWeekStart.setDate(today.getDate() - today.getDay() + weekOffset * 7);
-    const newWeekEnd = new Date(newWeekStart);
-    newWeekEnd.setDate(newWeekStart.getDate() + 6);
-    if (newDate < newWeekStart || newDate > newWeekEnd) {
-      setWeekOffset(weekOffset + Math.round((newDate.getTime() - today.getTime()) / (7 * 86400000)));
-    }
-  };
+  const goToday = () => setCurrentDate(new Date());
 
-  const openCreateDialog = async () => {
-    const [c, sv] = await Promise.all([
-      fetch("/api/customers").then((r) => r.json()),
-      fetch("/api/services").then((r) => r.json()),
-    ]);
-    setCustomers(c.customers || []);
-    setServices(sv.services || []);
-    setCreateForm({
-      customerId: "", serviceId: "", stylistId: "",
-      date: selectedDateStr,
-      startTime: "09:00", endTime: "10:00",
-    });
-    setShowCreateDialog(true);
-  };
-
-  const openDetailDialog = async (apt: any) => {
-    const [c, sv] = await Promise.all([
-      fetch("/api/customers").then((r) => r.json()),
-      fetch("/api/services").then((r) => r.json()),
-    ]);
-    setCustomers(c.customers || []);
-    setServices(sv.services || []);
-    setSelectedApt({
-      ...apt,
-      editDate: apt.date,
-      editStartTime: to24h(apt.time),
-      editEndTime: to24h(apt.endTime),
-      editCustomerId: "",
-      editServiceId: "",
-      editStylistId: "",
-    });
-    setShowDetailDialog(true);
-  };
-
-  const createAppointment = async () => {
-    setFormSubmitting(true);
-    try {
-      const start12 = to12h(createForm.startTime);
-      const end12 = to12h(createForm.endTime);
-      await fetch("/api/appointments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: createForm.date,
-          startTime: start12,
-          endTime: end12,
-          customerId: createForm.customerId,
-          serviceId: createForm.serviceId,
-          stylistId: createForm.stylistId,
-        }),
-      });
-      setShowCreateDialog(false);
-      loadAppointments();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setFormSubmitting(false);
-    }
+  const openDetail = (apt: any) => {
+    setSelectedApt(apt);
+    setShowDetail(true);
   };
 
   const updateStatus = async (id: string, status: string) => {
@@ -266,21 +179,55 @@ function AppointmentsContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    loadAppointments();
-    setShowDetailDialog(false);
+    setShowDetail(false);
+    loadData();
   };
 
   const deleteAppointment = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this appointment?")) return;
+    if (!confirm("Delete this appointment?")) return;
     await fetch(`/api/appointments/${id}`, { method: "DELETE" });
-    loadAppointments();
-    setShowDetailDialog(false);
+    setShowDetail(false);
+    loadData();
   };
 
-  const statusCounts = dayAppointments.reduce((acc: Record<string, number>, a: any) => {
-    acc[a.status] = (acc[a.status] || 0) + 1;
-    return acc;
-  }, {});
+  const openCreate = async () => {
+    const [c, sv] = await Promise.all([
+      fetch("/api/customers").then((r) => r.json()),
+      fetch("/api/services").then((r) => r.json()),
+    ]);
+    setCustomers(c.customers || []);
+    setServices(sv.services || []);
+    setCreateForm({
+      customerId: "", serviceId: "", stylistId: "",
+      date: toDateStr(currentDate),
+      startTime: "09:00", endTime: "10:00",
+    });
+    setShowCreate(true);
+  };
+
+  const createAppointment = async () => {
+    setFormSubmitting(true);
+    try {
+      await fetch("/api/appointments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: createForm.date,
+          startTime: to12h(createForm.startTime),
+          endTime: to12h(createForm.endTime),
+          customerId: createForm.customerId,
+          serviceId: createForm.serviceId,
+          stylistId: createForm.stylistId,
+        }),
+      });
+      setShowCreate(false);
+      loadData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setFormSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -290,574 +237,114 @@ function AppointmentsContent() {
     );
   }
 
+  const monthTitle = format(currentDate, "MMMM yyyy");
+  const weekTitle = `${format(startOfWeek(currentDate), "MMM d")} – ${format(endOfWeek(currentDate), "MMM d, yyyy")}`;
+  const dayTitle = format(currentDate, "EEEE, MMMM d, yyyy");
+  const headerTitle = view === "month" ? monthTitle : view === "week" ? weekTitle : dayTitle;
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Appointments</h1>
-          <p className="text-gray-500 text-[13px]">
-            {dayAppointments.length} appointment{dayAppointments.length !== 1 ? "s" : ""} on{" "}
-            <span className="text-gray-700 font-medium">{formatSelectedDate(selectedDate)}</span>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900 flex items-center gap-2.5">
+            <div className="p-2 bg-primary/10 rounded-xl">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+            </div>
+            Appointments
+          </h1>
+          <p className="text-gray-500 text-[13px] mt-1 ml-[42px]">
+            {mappedApts.length} total booking{mappedApts.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-100/80 rounded-lg p-0.5">
-            <button
-              onClick={() => setView("list")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all cursor-pointer ${
-                view === "list"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <LayoutList className="h-3.5 w-3.5" />
-              List
-            </button>
-            <button
-              onClick={() => setView("calendar")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all cursor-pointer ${
-                view === "calendar"
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <CalendarDays className="h-3.5 w-3.5" />
-              Calendar
-            </button>
-          </div>
+        {isAdmin && (
           <Button
-            onClick={openCreateDialog}
-            className="bg-primary hover:bg-primary/90 text-white rounded-lg text-[13px] font-medium cursor-pointer"
+            onClick={openCreate}
+            className="bg-primary hover:bg-primary/90 text-white rounded-xl text-[13px] font-medium cursor-pointer shadow-sm shadow-primary/20 h-9 px-4"
           >
-            <Plus className="h-4 w-4" />
-            New Booking
+            <Plus className="h-4 w-4" /> New Appointment
+          </Button>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon-sm" onClick={navigatePrev} className="text-gray-500 hover:text-gray-700 cursor-pointer">
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h2 className="text-[15px] font-semibold text-gray-900 min-w-[200px] text-center">{headerTitle}</h2>
+          <Button variant="ghost" size="icon-sm" onClick={navigateNext} className="text-gray-500 hover:text-gray-700 cursor-pointer">
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block" />
+          <Button variant="ghost" size="sm" onClick={goToday} className="text-[12px] font-medium text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer hidden sm:flex">
+            Today
           </Button>
         </div>
-      </div>
-
-      {/* Date Navigation */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => navigateDate(-1)}
-          className="shrink-0 text-gray-500 hover:text-gray-700 cursor-pointer"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-
-        <div className="flex items-center gap-1.5 flex-1 overflow-x-auto scrollbar-none py-1">
-          {daysInWeek.map((day, i) => {
-            const hasAppts = mappedAppointments.some((a) => a.date === toDateStr(day));
-            return (
-              <button
-                key={i}
-                onClick={() => setSelectedDate(day)}
-                className={`relative flex flex-col items-center min-w-[56px] px-2 py-2 rounded-xl transition-all duration-200 cursor-pointer ${
-                  isSelected(day)
-                    ? "bg-primary text-white"
-                    : isToday(day)
-                      ? "bg-primary/10 text-primary"
-                      : "hover:bg-gray-100/60 text-gray-600"
-                }`}
-              >
-                <span
-                  className={`text-[10px] uppercase font-semibold tracking-wider ${
-                    isSelected(day) ? "text-white/80" : ""
-                  }`}
-                >
-                  {day.toLocaleDateString("en-US", { weekday: "short" })}
-                </span>
-                <span className="text-lg font-bold leading-tight">{day.getDate()}</span>
-                {hasAppts && (
-                  <span
-                    className={`w-1 h-1 rounded-full mt-0.5 ${
-                      isSelected(day) ? "bg-white/80" : "bg-primary"
-                    }`}
-                  />
-                )}
-                {isToday(day) && !isSelected(day) && (
-                  <span className="absolute -bottom-0.5 w-4 h-0.5 rounded-full bg-primary" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => navigateDate(1)}
-          className="shrink-0 text-gray-500 hover:text-gray-700 cursor-pointer"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-
-        <div className="hidden sm:block w-px h-6 bg-gray-200 mx-1" />
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSelectedDate(new Date())}
-          className="hidden sm:flex text-[12px] font-medium text-primary hover:text-primary/80 hover:bg-primary/5 cursor-pointer"
-        >
-          Today
-        </Button>
-      </div>
-
-      {/* Search + Status Filters */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-        <div className="relative flex-1 max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search by name, service, or stylist..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 pr-4 h-9 rounded-lg border-border/60 text-[13px] bg-white placeholder:text-gray-400"
-          />
-        </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          {["all", "confirmed", "pending", "in-progress", "completed", "cancelled"].map((s) => (
+        <div className="flex items-center bg-gray-100/80 rounded-lg p-0.5">
+          {(["month", "week", "day"] as const).map((v) => (
             <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-2.5 py-1 rounded-lg text-[12px] font-medium transition-colors cursor-pointer ${
-                statusFilter === s
-                  ? "bg-primary/10 text-primary"
-                  : "bg-gray-100/60 text-gray-500 hover:bg-gray-200/80 hover:text-gray-700"
+              key={v}
+              onClick={() => setView(v)}
+              className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-all cursor-pointer ${
+                view === v ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              {s === "all" ? "All" : statusConfig[s]?.label || s}
-              {s !== "all" && statusCounts[s] ? (
-                <span className={`ml-1 text-[10px] ${statusFilter === s ? "text-primary/70" : "text-gray-400"}`}>
-                  {statusCounts[s]}
-                </span>
-              ) : null}
+              {v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Content */}
-      {view === "calendar" ? (
-        <Card className="border-border/50 rounded-xl overflow-hidden">
-          <CardContent className="p-0">
-            <div className="grid grid-cols-1 lg:grid-cols-[72px_1fr]">
-              {/* Time labels */}
-              <div className="hidden lg:flex flex-col border-r border-border/50">
-                <div className="h-12 border-b border-border/50 bg-gray-50/50" />
-                {timeSlots.map((time, i) => (
-                  <div
-                    key={time}
-                    className={`h-14 flex items-start px-2 pt-1.5 text-[11px] font-medium ${
-                      i % 2 === 0 ? "text-gray-500" : "text-gray-300"
-                    }`}
-                  >
-                    {time}
-                  </div>
-                ))}
-              </div>
-
-              {/* Stylist columns */}
-              <div className="overflow-x-auto">
-                <div className="flex" style={{ minWidth: displayStylists.length * 220 }}>
-                  {displayStylists.map((stylist: any, si: number) => {
-                    const stylistAppts = filteredAppointments.filter(
-                      (a: any) => a.stylist === stylist.name && a.date === selectedDateStr
-                    );
-                    return (
-                      <div
-                        key={stylist.id}
-                        className={`flex-1 min-w-[220px] ${
-                          si < displayStylists.length - 1 ? "border-r border-border/50" : ""
-                        }`}
-                      >
-                        {/* Stylist header */}
-                        <div className="h-12 flex items-center gap-2.5 px-3 border-b border-border/50 bg-gray-50/50 sticky top-0 z-10">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full shrink-0"
-                            style={{ backgroundColor: stylist.color }}
-                          />
-                          <span className="font-semibold text-[13px] text-gray-800 truncate">
-                            {stylist.name}
-                          </span>
-                          <span className="ml-auto text-[10px] font-medium text-gray-400 bg-gray-100 rounded-full px-1.5 py-0.5">
-                            {stylistAppts.length}
-                          </span>
-                        </div>
-
-                        {/* Time grid */}
-                        <div className="relative">
-                          {timeSlots.map((time, i) => (
-                            <div
-                              key={time}
-                              className={`h-14 border-b ${
-                                i % 2 === 0 ? "border-border/50" : "border-transparent"
-                              } hover:bg-primary/[0.02] transition-colors`}
-                            >
-                              <div className="w-full h-px bg-gray-50 mt-7" />
-                            </div>
-                          ))}
-
-                          {/* Current time indicator */}
-                          {isViewingToday &&
-                            si === 0 &&
-                            (() => {
-                              const slotIdx = timeSlots.findIndex((t) => {
-                                const t24 = to24h(t);
-                                const [th, tm] = t24.split(":").map(Number);
-                                return currentHour < th || (currentHour === th && currentMinute < tm);
-                              });
-                              if (slotIdx === -1 && currentHour >= 17) return null;
-                              const idx = slotIdx === -1 ? timeSlots.length - 1 : slotIdx;
-                              const t24 = to24h(timeSlots[Math.max(0, idx)]);
-                              const [th, tm] = t24.split(":").map(Number);
-                              const offset = idx * 56 + (currentMinute / 60) * 56;
-                              return (
-                                <div
-                                  className="absolute left-0 right-0 z-20 pointer-events-none"
-                                  style={{ top: `${offset}px` }}
-                                >
-                                  <div className="flex items-center">
-                                    <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0" />
-                                    <div className="flex-1 h-px bg-red-400" />
-                                  </div>
-                                </div>
-                              );
-                            })()}
-
-                          {/* Appointments */}
-                          {stylistAppts.map((apt: any) => {
-                            const startIdx = timeSlots.indexOf(apt.time);
-                            const endIdx = timeSlots.indexOf(apt.endTime);
-                            const duration = Math.max(endIdx - startIdx + 1, 1);
-                            if (startIdx === -1) return null;
-                            const statusColors: Record<string, string> = {
-                              confirmed: "border-l-emerald-400 bg-emerald-50/80",
-                              "in-progress": "border-l-sky-400 bg-sky-50/80",
-                              pending: "border-l-amber-400 bg-amber-50/80",
-                              completed: "border-l-primary bg-primary-50/80",
-                              cancelled: "border-l-red-300 bg-red-50/60",
-                            };
-                            return (
-                              <div
-                                key={apt.id}
-                                onClick={() => openDetailDialog(apt)}
-                                className={`absolute left-1.5 right-1.5 rounded-lg p-2 border-l-[3px] hover:shadow-sm transition-all cursor-pointer overflow-hidden group ${
-                                  statusColors[apt.status] || "border-l-gray-300 bg-gray-50"
-                                }`}
-                                style={{
-                                  top: `${startIdx * 56 + 2}px`,
-                                  height: `${Math.max(duration * 56 - 6, 28)}px`,
-                                }}
-                              >
-                                <div className="flex items-center justify-between gap-1">
-                                  <p className="text-[11px] font-bold text-gray-900 truncate">{apt.client}</p>
-                                  <span
-                                    className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                                      statusConfig[apt.status]?.dot || "bg-gray-400"
-                                    }`}
-                                  />
-                                </div>
-                                <p className="text-[10px] text-gray-500 truncate mt-0.5">{apt.service}</p>
-                                {duration > 1 && (
-                                  <p className="text-[9px] text-gray-400 mt-1 flex items-center gap-0.5">
-                                    <Clock className="h-2.5 w-2.5" /> {apt.time} – {apt.endTime}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {filteredAppointments.length === 0 ? (
-            <Card className="border-border/50 rounded-xl">
-              <CardContent className="py-16 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-100 mb-3">
-                  <CalendarDays className="h-6 w-6 text-gray-400" />
-                </div>
-                <p className="text-gray-500 text-[13px] font-medium">
-                  No appointments for {formatSelectedDate(selectedDate)}
-                </p>
-                <p className="text-gray-400 text-[12px] mt-1">
-                  Try a different date or create a new booking
-                </p>
-                <Button
-                  onClick={openCreateDialog}
-                  variant="ghost"
-                  size="sm"
-                  className="mt-3 text-primary hover:text-primary/80 cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Book one now
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            filteredAppointments.map((apt: any) => (
-              <Card
-                key={apt.id}
-                onClick={() => openDetailDialog(apt)}
-                className="border-border/50 rounded-xl hover:border-border hover:shadow-sm transition-all cursor-pointer group"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* Time block */}
-                    <div
-                      className="flex flex-col items-center justify-center w-14 h-14 rounded-lg text-white font-bold shrink-0"
-                      style={{ backgroundColor: getStylistColor(apt.stylist) }}
-                    >
-                      <span className="text-[13px] leading-none">{apt.time?.split(" ")[0]}</span>
-                      <span className="text-[9px] opacity-80 mt-0.5">{apt.time?.split(" ")[1]}</span>
-                    </div>
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-[14px] text-gray-900">{apt.client}</h3>
-                        <Badge
-                          className={`text-[10px] px-1.5 py-0 border ${
-                            statusConfig[apt.status]?.color || statusConfig.confirmed.color
-                          }`}
-                        >
-                          <span
-                            className={`w-1.5 h-1.5 rounded-full mr-1 ${
-                              statusConfig[apt.status]?.dot || "bg-emerald-500"
-                            }`}
-                          />
-                          {statusConfig[apt.status]?.label || apt.status}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Scissors className="h-3 w-3" /> {apt.service}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <User className="h-3 w-3" /> {apt.stylist}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" /> {apt.time} - {apt.endTime}
-                        </span>
-                        {apt.price ? (
-                          <span className="font-medium text-gray-700">${apt.price}</span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Quick actions */}
-                    <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {apt.status !== "confirmed" && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateStatus(apt.id, "confirmed");
-                          }}
-                          className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors cursor-pointer"
-                          title="Mark Confirmed"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {apt.status !== "completed" && apt.status !== "cancelled" && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateStatus(apt.id, "completed");
-                          }}
-                          className="p-1.5 rounded-lg bg-primary-50 text-primary hover:bg-primary-100 transition-colors cursor-pointer"
-                          title="Mark Completed"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteAppointment(apt.id);
-                        }}
-                        className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors cursor-pointer"
-                        title="Delete"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+      {/* Calendar Views */}
+      {view === "month" && (
+        <MonthView
+          currentDate={currentDate}
+          getAptsForDate={getAptsForDate}
+          onDateClick={(d) => { setCurrentDate(d); setView("day"); }}
+          onAptClick={openDetail}
+          stylists={stylists}
+        />
+      )}
+      {view === "week" && (
+        <WeekView
+          currentDate={currentDate}
+          getAptsForDate={getAptsForDate}
+          onAptClick={openDetail}
+          stylists={stylists}
+        />
+      )}
+      {view === "day" && (
+        <DayView
+          currentDate={currentDate}
+          getAptsForDate={getAptsForDate}
+          onAptClick={openDetail}
+          stylists={stylists}
+        />
       )}
 
-      {/* Create Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-[16px]">New Appointment</DialogTitle>
-            <DialogDescription>Book for {formatSelectedDate(selectedDate)}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label className="text-[13px]">Customer</Label>
-              <select
-                value={createForm.customerId}
-                onChange={(e) => setCreateForm({ ...createForm, customerId: e.target.value })}
-                className="w-full rounded-lg border border-border/60 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                <option value="">Select customer...</option>
-                {customers.map((c: any) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[13px]">Service</Label>
-              <select
-                value={createForm.serviceId}
-                onChange={(e) => setCreateForm({ ...createForm, serviceId: e.target.value })}
-                className="w-full rounded-lg border border-border/60 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                <option value="">Select service...</option>
-                {services.map((s: any) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} - {s.price}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[13px]">Stylist</Label>
-              <select
-                value={createForm.stylistId}
-                onChange={(e) => setCreateForm({ ...createForm, stylistId: e.target.value })}
-                className="w-full rounded-lg border border-border/60 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                <option value="">Select stylist...</option>
-                {displayStylists.map((st: any) => (
-                  <option key={st.id} value={st.id}>
-                    {st.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-[13px]">Date</Label>
-              <Input
-                type="date"
-                value={createForm.date}
-                onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
-                className="rounded-lg text-[13px]"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-2">
-                <Label className="text-[13px]">Start Time</Label>
-                <Input
-                  type="time"
-                  value={createForm.startTime}
-                  onChange={(e) => setCreateForm({ ...createForm, startTime: e.target.value })}
-                  className="rounded-lg text-[13px]"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[13px]">End Time</Label>
-                <Input
-                  type="time"
-                  value={createForm.endTime}
-                  onChange={(e) => setCreateForm({ ...createForm, endTime: e.target.value })}
-                  className="rounded-lg text-[13px]"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateDialog(false)}
-              className="rounded-lg cursor-pointer"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={createAppointment}
-              disabled={formSubmitting || !createForm.customerId || !createForm.serviceId || !createForm.stylistId}
-              className="bg-primary hover:bg-primary/90 text-white rounded-lg cursor-pointer"
-            >
-              {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Book Appointment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+      <Dialog open={showDetail} onOpenChange={setShowDetail}>
+        <DialogContent className="sm:max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-[16px]">Appointment Details</DialogTitle>
+            <DialogTitle>Appointment Details</DialogTitle>
             <DialogDescription>View and manage this booking</DialogDescription>
           </DialogHeader>
           {selectedApt && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-[13px]">
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Client</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedApt.client}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Service</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedApt.service}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Stylist</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">{selectedApt.stylist}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Status</p>
-                  <Badge
-                    className={`text-[11px] mt-1 border ${
-                      statusConfig[selectedApt.status]?.color || statusConfig.confirmed.color
-                    }`}
-                  >
-                    {statusConfig[selectedApt.status]?.label || selectedApt.status}
-                  </Badge>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Time</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">
-                    {selectedApt.time} - {selectedApt.endTime}
-                  </p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-50/80 border border-border/30">
-                  <p className="text-gray-400 text-[11px] uppercase tracking-wider font-medium">Price</p>
-                  <p className="font-semibold text-gray-900 mt-0.5">${selectedApt.price || 0}</p>
-                </div>
-              </div>
-
+            <div className="mt-6 space-y-5 px-1">
+              {/* Status */}
               <div>
-                <p className="text-[12px] font-semibold text-gray-700 mb-2 uppercase tracking-wider">
-                  Change Status
-                </p>
+                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Status</p>
                 <div className="flex flex-wrap gap-1.5">
                   {["pending", "confirmed", "in-progress", "completed", "cancelled"].map((s) => (
                     <button
                       key={s}
                       onClick={() => updateStatus(selectedApt.id, s)}
-                      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors cursor-pointer border ${
                         selectedApt.status === s
-                          ? "bg-primary/10 text-primary"
-                          : "bg-gray-100/60 text-gray-600 hover:bg-gray-200/80"
+                          ? `${statusConfig[s]?.color || ""} border-current`
+                          : "bg-gray-50 text-gray-500 hover:bg-gray-100 border-transparent"
                       }`}
                     >
                       {statusConfig[s]?.label || s}
@@ -866,39 +353,446 @@ function AppointmentsContent() {
                 </div>
               </div>
 
-              <DialogFooter className="gap-2 border-t border-border/50 pt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => deleteAppointment(selectedApt.id)}
-                  className="rounded-lg text-red-500 border-red-200 hover:bg-red-50 cursor-pointer"
-                >
-                  <Trash2 className="h-4 w-4" /> Delete
-                </Button>
-                <Button
-                  onClick={() => setShowDetailDialog(false)}
-                  className="rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 cursor-pointer"
-                >
-                  Close
-                </Button>
-              </DialogFooter>
+              {/* Info Cards */}
+              <div className="space-y-3">
+                <InfoRow icon={<User className="h-4 w-4 text-gray-400" />} label="Client" value={selectedApt.client} />
+                {selectedApt.clientEmail && (
+                  <InfoRow icon={<Mail className="h-4 w-4 text-gray-400" />} label="Email" value={selectedApt.clientEmail} />
+                )}
+                {selectedApt.clientPhone && (
+                  <InfoRow icon={<Phone className="h-4 w-4 text-gray-400" />} label="Phone" value={selectedApt.clientPhone} />
+                )}
+                <InfoRow icon={<Scissors className="h-4 w-4 text-gray-400" />} label="Service" value={selectedApt.service} />
+                <InfoRow
+                  icon={<div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: selectedApt.stylistColor }} />}
+                  label="Stylist"
+                  value={selectedApt.stylist}
+                />
+                <InfoRow icon={<CalendarIcon className="h-4 w-4 text-gray-400" />} label="Date" value={
+                  selectedApt.date ? (() => {
+                    const d = new Date(selectedApt.date.includes("T") ? selectedApt.date : selectedApt.date + "T00:00:00");
+                    return isNaN(d.getTime()) ? String(selectedApt.date) : format(d, "MMMM d, yyyy");
+                  })() : ""
+                } />
+                <InfoRow icon={<Clock className="h-4 w-4 text-gray-400" />} label="Time" value={`${to12h(selectedApt.startTime)} – ${to12h(selectedApt.endTime)}`} />
+                {selectedApt.price != null && (
+                  <InfoRow icon={<span className="text-gray-400 text-[13px] font-bold">$</span>} label="Price" value={`$${selectedApt.price}`} />
+                )}
+                {selectedApt.notes && (
+                  <InfoRow icon={<StickyNote className="h-4 w-4 text-gray-400" />} label="Notes" value={selectedApt.notes} />
+                )}
+              </div>
+
+              {/* Actions */}
+              {isAdmin && (
+                <div className="pt-3 border-t border-gray-100">
+                  <Button
+                    variant="outline"
+                    onClick={() => deleteAppointment(selectedApt.id)}
+                    className="w-full rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer text-[13px]"
+                  >
+                    Delete Appointment
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create Dialog */}
+      {isAdmin && (
+        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+          <DialogContent className="sm:max-w-md rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-[16px]">New Appointment</DialogTitle>
+              <DialogDescription>Book a new appointment</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <FormField label="Customer">
+                <select
+                  value={createForm.customerId}
+                  onChange={(e) => setCreateForm({ ...createForm, customerId: e.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Select customer...</option>
+                  {customers.map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Service">
+                <select
+                  value={createForm.serviceId}
+                  onChange={(e) => setCreateForm({ ...createForm, serviceId: e.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Select service...</option>
+                  {services.map((s: any) => (
+                    <option key={s.id} value={s.id}>{s.name} - ${s.price}</option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Stylist">
+                <select
+                  value={createForm.stylistId}
+                  onChange={(e) => setCreateForm({ ...createForm, stylistId: e.target.value })}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-[13px] bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Select stylist...</option>
+                  {stylists.map((st: any) => (
+                    <option key={st.id} value={st.id}>{st.name}</option>
+                  ))}
+                </select>
+              </FormField>
+              <FormField label="Date">
+                <Input
+                  type="date"
+                  value={createForm.date}
+                  onChange={(e) => setCreateForm({ ...createForm, date: e.target.value })}
+                  className="rounded-lg text-[13px]"
+                />
+              </FormField>
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="Start Time">
+                  <Input
+                    type="time"
+                    value={createForm.startTime}
+                    onChange={(e) => setCreateForm({ ...createForm, startTime: e.target.value })}
+                    className="rounded-lg text-[13px]"
+                  />
+                </FormField>
+                <FormField label="End Time">
+                  <Input
+                    type="time"
+                    value={createForm.endTime}
+                    onChange={(e) => setCreateForm({ ...createForm, endTime: e.target.value })}
+                    className="rounded-lg text-[13px]"
+                  />
+                </FormField>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button variant="outline" onClick={() => setShowCreate(false)} className="rounded-lg cursor-pointer">
+                Cancel
+              </Button>
+              <Button
+                onClick={createAppointment}
+                disabled={formSubmitting || !createForm.customerId || !createForm.serviceId || !createForm.stylistId}
+                className="bg-primary hover:bg-primary/90 text-white rounded-lg cursor-pointer"
+              >
+                {formSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Book Appointment
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
 
-export default function AppointmentsPage() {
+function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+    <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50/80 border border-gray-100">
+      {icon}
+      <div className="min-w-0">
+        <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">{label}</p>
+        <p className="text-[13px] font-semibold text-gray-900 truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
+
+function FormField({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-[13px]">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+/* ───── Month View ───── */
+function MonthView({
+  currentDate,
+  getAptsForDate,
+  onDateClick,
+  onAptClick,
+  stylists,
+}: {
+  currentDate: Date;
+  getAptsForDate: (d: Date) => any[];
+  onDateClick: (d: Date) => void;
+  onAptClick: (a: any) => void;
+  stylists: any[];
+}) {
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calStart = startOfWeek(monthStart, { weekStartsOn: 0 });
+  const calEnd = endOfWeek(monthEnd, { weekStartsOn: 0 });
+  const days = eachDayOfInterval({ start: calStart, end: calEnd });
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      {/* Day headers */}
+      <div className="grid grid-cols-7 border-b border-gray-100">
+        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+          <div key={d} className="py-2.5 text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider">
+            {d}
+          </div>
+        ))}
+      </div>
+      {/* Days grid */}
+      <div className="grid grid-cols-7">
+        {days.map((day, i) => {
+          const apts = getAptsForDate(day);
+          const inMonth = isSameMonth(day, currentDate);
+          const today = isToday(day);
+          return (
+            <div
+              key={i}
+              onClick={() => onDateClick(day)}
+              className={`min-h-[100px] sm:min-h-[110px] p-1.5 border-b border-r border-gray-100 last:border-r-0 transition-colors cursor-pointer hover:bg-gray-50/50 ${
+                !inMonth ? "bg-gray-50/30" : ""
+              }`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span
+                  className={`text-[12px] font-medium w-6 h-6 flex items-center justify-center rounded-full ${
+                    today
+                      ? "bg-primary text-white font-bold"
+                      : inMonth
+                        ? "text-gray-700"
+                        : "text-gray-300"
+                  }`}
+                >
+                  {format(day, "d")}
+                </span>
+                {apts.length > 0 && (
+                  <span className="text-[10px] font-medium text-gray-400">{apts.length}</span>
+                )}
+              </div>
+              <div className="space-y-0.5">
+                {apts.slice(0, 3).map((apt: any) => (
+                  <div
+                    key={apt.id}
+                    onClick={(e) => { e.stopPropagation(); onAptClick(apt); }}
+                    className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium truncate cursor-pointer hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: `${apt.stylistColor}15`, color: apt.stylistColor, borderLeft: `2px solid ${apt.stylistColor}` }}
+                  >
+                    <span className="truncate">{to12h(apt.startTime).replace(/:00/g, "").replace(" ", "")} {apt.client}</span>
+                  </div>
+                ))}
+                {apts.length > 3 && (
+                  <p className="text-[9px] text-gray-400 font-medium px-1">+{apts.length - 3} more</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ───── Week View ───── */
+function WeekView({
+  currentDate,
+  getAptsForDate,
+  onAptClick,
+  stylists,
+}: {
+  currentDate: Date;
+  getAptsForDate: (d: Date) => any[];
+  onAptClick: (a: any) => void;
+  stylists: any[];
+}) {
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      {/* Day headers */}
+      <div className="grid grid-cols-[60px_repeat(7,1fr)] border-b border-gray-100">
+        <div className="py-3" />
+        {weekDays.map((day) => {
+          const today = isToday(day);
+          return (
+            <div key={day.toISOString()} className="py-3 text-center border-l border-gray-100">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{format(day, "EEE")}</p>
+              <p className={`text-[18px] font-bold mt-0.5 ${today ? "text-primary" : "text-gray-900"}`}>
+                {format(day, "d")}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Time grid */}
+      <div className="overflow-y-auto max-h-[600px]">
+        {HOURS.map((hour) => (
+          <div key={hour} className="grid grid-cols-[60px_repeat(7,1fr)] min-h-[60px]">
+            <div className="py-1 pr-2 text-right text-[11px] font-medium text-gray-400 border-r border-gray-100">
+              {hour > 12 ? `${hour - 12} PM` : hour === 12 ? "12 PM" : `${hour} AM`}
+            </div>
+            {weekDays.map((day) => {
+              const apts = getAptsForDate(day).filter((a) => {
+                const h = parseInt(to24h(a.startTime).split(":")[0]);
+                return h === hour;
+              });
+              return (
+                <div key={day.toISOString() + hour} className="border-l border-gray-100 p-0.5 relative">
+                  {apts.map((apt: any) => {
+                    const startH = parseInt(to24h(apt.startTime).split(":")[0]);
+                    const startM = parseInt(to24h(apt.startTime).split(":")[1]);
+                    const endH = parseInt(to24h(apt.endTime).split(":")[0]);
+                    const endM = parseInt(to24h(apt.endTime).split(":")[1]);
+                    const durationMin = (endH * 60 + endM) - (startH * 60 + startM);
+                    const heightPx = Math.max((durationMin / 60) * 60, 28);
+                    const topOffset = (startM / 60) * 60;
+
+                    return (
+                      <div
+                        key={apt.id}
+                        onClick={() => onAptClick(apt)}
+                        className="absolute left-0.5 right-0.5 rounded-lg p-1.5 border-l-[3px] cursor-pointer hover:shadow-sm transition-all overflow-hidden z-10"
+                        style={{
+                          top: `${topOffset}px`,
+                          height: `${heightPx}px`,
+                          borderColor: apt.stylistColor,
+                          backgroundColor: `${apt.stylistColor}12`,
+                        }}
+                      >
+                        <p className="text-[10px] font-bold text-gray-900 truncate">{apt.client}</p>
+                        <p className="text-[9px] text-gray-500 truncate">{apt.service}</p>
+                        <p className="text-[8px] text-gray-400 mt-0.5">
+                          {to12h(apt.startTime)} – {to12h(apt.endTime)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ───── Day View ───── */
+function DayView({
+  currentDate,
+  getAptsForDate,
+  onAptClick,
+  stylists,
+}: {
+  currentDate: Date;
+  getAptsForDate: (d: Date) => any[];
+  onAptClick: (a: any) => void;
+  stylists: any[];
+}) {
+  const dayApts = getAptsForDate(currentDate);
+  const today = isToday(currentDate);
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+      {/* Time slots */}
+      <div className="overflow-y-auto max-h-[600px]">
+        {HOURS.map((hour) => {
+          const hourApts = dayApts.filter((a) => {
+            const h = parseInt(to24h(a.startTime).split(":")[0]);
+            return h === hour;
+          });
+
+          return (
+            <div key={hour} className="grid grid-cols-[70px_1fr] min-h-[72px] border-b border-gray-100">
+              <div className="py-2 pr-3 text-right text-[12px] font-medium text-gray-400 border-r border-gray-100">
+                {hour > 12 ? `${hour - 12} PM` : hour === 12 ? "12 PM" : `${hour} AM`}
+              </div>
+              <div className="relative p-1">
+                {/* Current time indicator */}
+                {today && (() => {
+                  const now = new Date();
+                  const currentHour = now.getHours();
+                  if (currentHour !== hour) return null;
+                  const mins = now.getMinutes();
+                  return (
+                    <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top: `${(mins / 60) * 72}px` }}>
+                      <div className="flex items-center">
+                        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0" />
+                        <div className="flex-1 h-px bg-red-400" />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {hourApts.map((apt: any) => {
+                  const startM = parseInt(to24h(apt.startTime).split(":")[1]);
+                  const endH = parseInt(to24h(apt.endTime).split(":")[0]);
+                  const endM = parseInt(to24h(apt.endTime).split(":")[1]);
+                  const durationMin = (endH * 60 + endM) - (hour * 60 + startM);
+                  const heightPx = Math.max((durationMin / 60) * 72, 32);
+
+                  return (
+                    <div
+                      key={apt.id}
+                      onClick={() => onAptClick(apt)}
+                      className="absolute left-1 right-1 rounded-xl p-3 border-l-[4px] cursor-pointer hover:shadow-md transition-all overflow-hidden group"
+                      style={{
+                        top: `${(startM / 60) * 72}px`,
+                        height: `${heightPx}px`,
+                        borderColor: apt.stylistColor,
+                        backgroundColor: `${apt.stylistColor}10`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-[13px] font-bold text-gray-900 truncate">{apt.client}</p>
+                        <span
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: statusConfig[apt.status]?.dot || "#9ca3af" }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-gray-600 truncate">{apt.service}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: apt.stylistColor }} />
+                          <span className="text-[10px] text-gray-500">{apt.stylist}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-400">
+                          {to12h(apt.startTime)} – {to12h(apt.endTime)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom summary */}
+      {dayApts.length > 0 && (
+        <div className="border-t border-gray-100 p-4 bg-gray-50/50">
+          <div className="flex flex-wrap gap-4 text-[12px] text-gray-500">
+            <span className="font-medium text-gray-700">{dayApts.length} appointment{dayApts.length !== 1 ? "s" : ""}</span>
+            {Object.entries(
+              dayApts.reduce((acc: Record<string, number>, a: any) => {
+                acc[a.status] = (acc[a.status] || 0) + 1;
+                return acc;
+              }, {})
+            ).map(([status, count]) => (
+              <span key={status} className="flex items-center gap-1">
+                <span className={`w-1.5 h-1.5 rounded-full ${statusConfig[status]?.dot || "bg-gray-400"}`} />
+                {statusConfig[status]?.label || status}: {count}
+              </span>
+            ))}
+          </div>
         </div>
-      }
-    >
-      <AppointmentsContent />
-    </Suspense>
+      )}
+    </div>
   );
 }

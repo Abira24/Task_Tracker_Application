@@ -96,12 +96,12 @@ export async function GET() {
     const [todayRevenue] = await query<any[]>(
       `SELECT COALESCE(SUM(s.price), 0) as total
        FROM Appointment a JOIN Service s ON a.serviceId = s.id
-       WHERE a.date = ? AND a.status != 'cancelled'`,
+       WHERE DATE(a.date) = ? AND a.status != 'cancelled'`,
       [today]
     );
 
     const [todayApptsCount] = await query<any[]>(
-      "SELECT COUNT(*) as count FROM Appointment WHERE date = ?",
+      "SELECT COUNT(*) as count FROM Appointment WHERE DATE(date) = ?",
       [today]
     );
 
@@ -113,7 +113,7 @@ export async function GET() {
        JOIN Customer c ON a.customerId = c.id
        JOIN Service s ON a.serviceId = s.id
        JOIN Stylist st ON a.stylistId = st.id
-       WHERE a.date = ?
+       WHERE DATE(a.date) = ?
        ORDER BY a.startTime`,
       [today]
     );
@@ -124,19 +124,22 @@ export async function GET() {
     }, {});
 
     const todayStylistPerf = await query<any[]>(
-      `SELECT st.name, st.color, COUNT(a.id) as appointments, COALESCE(SUM(s.price), 0) as revenue
+      `SELECT st.name, st.color,
+              COUNT(CASE WHEN a.status != 'cancelled' THEN a.id END) as appointments,
+              COALESCE(SUM(CASE WHEN a.status = 'completed' THEN s.price ELSE 0 END), 0) as todayEarnings,
+              COALESCE(SUM(CASE WHEN a.status != 'cancelled' THEN s.price ELSE 0 END), 0) as revenue
        FROM Stylist st
-       LEFT JOIN Appointment a ON st.id = a.stylistId AND a.date = ?
-       LEFT JOIN Service s ON a.serviceId = s.id AND a.status != 'cancelled'
+       LEFT JOIN Appointment a ON st.id = a.stylistId AND DATE(a.date) = ?
+       LEFT JOIN Service s ON a.serviceId = s.id
        WHERE st.isActive = 1
-       GROUP BY st.id ORDER BY revenue DESC`,
+       GROUP BY st.id ORDER BY todayEarnings DESC`,
       [today]
     );
 
     const todayServiceBreakdown = await query<any[]>(
       `SELECT s.name, COUNT(a.id) as count, COALESCE(SUM(s.price), 0) as revenue
        FROM Appointment a JOIN Service s ON a.serviceId = s.id
-       WHERE a.date = ? AND a.status != 'cancelled'
+       WHERE DATE(a.date) = ? AND a.status != 'cancelled'
        GROUP BY s.id ORDER BY count DESC`,
       [today]
     );
@@ -172,6 +175,7 @@ export async function GET() {
           color: s.color,
           appointments: s.appointments,
           revenue: s.revenue || 0,
+          todayEarnings: s.todayEarnings || 0,
         })),
         serviceBreakdown: todayServiceBreakdown.map((s: any) => ({
           name: s.name,

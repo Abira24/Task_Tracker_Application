@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getSingle } from "@/lib/db";
-import { requireAdmin } from "@/lib/role-guard";
+import { getSession } from "@/lib/session";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,9 +26,23 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const body = await request.json();
-    const { date, startTime, endTime, status, notes, customerId, serviceId, stylistId } = body;
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const body = await request.json();
+
+    if (session.role !== "admin") {
+      const apt = await getSingle<any>("SELECT stylistId FROM Appointment WHERE id = ?", [id]);
+      if (!apt) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      if (apt.stylistId !== session.stylistId) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+      if (body.status) {
+        await query("UPDATE Appointment SET status=? WHERE id=?", [body.status, id]);
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    const { date, startTime, endTime, status, notes, customerId, serviceId, stylistId } = body;
     await query(
       "UPDATE Appointment SET date=?, startTime=?, endTime=?, status=?, notes=?, customerId=?, serviceId=?, stylistId=? WHERE id=?",
       [date ? new Date(date) : undefined, startTime, endTime, status, notes, customerId, serviceId, stylistId, id]
@@ -36,13 +50,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    console.error("Update appointment error:", error);
     return NextResponse.json({ error: "Failed to update appointment" }, { status: 500 });
   }
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdmin();
-  if (auth.error) return auth.error;
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   try {
     await query("DELETE FROM Appointment WHERE id = ?", [id]);

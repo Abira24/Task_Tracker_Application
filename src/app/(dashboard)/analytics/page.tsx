@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AdminGuard } from "@/components/admin-guard";
 import {
   DollarSign,
@@ -32,13 +32,22 @@ export default function ReportsPage() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     fetch("/api/analytics")
       .then((r) => r.json())
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchData();
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") fetchData();
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [fetchData]);
 
   const exportDailySummary = () => {
     if (!data?.daily) return;
@@ -79,9 +88,10 @@ export default function ReportsPage() {
         const ws3 = XLSX.utils.json_to_sheet(d.stylistPerformance.map((s: any) => ({
           Stylist: s.name,
           Appointments: s.appointments,
+          "Today's Earnings": `$${(s.todayEarnings || 0).toLocaleString()}`,
           Revenue: `$${s.revenue.toLocaleString()}`,
         })));
-        ws3["!cols"] = [{ wch: 18 }, { wch: 14 }, { wch: 12 }];
+        ws3["!cols"] = [{ wch: 18 }, { wch: 14 }, { wch: 18 }, { wch: 12 }];
         XLSX.utils.book_append_sheet(wb, ws3, "Stylists");
       }
 
@@ -227,10 +237,13 @@ export default function ReportsPage() {
                         <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0" style={{ backgroundColor: s.color }}>
                           {s.name.split(" ").map((n: string) => n[0]).join("")}
                         </div>
-                        <span className="flex-1 font-medium text-[13px] text-gray-900">{s.name}</span>
-                        <div className="text-right">
-                          <p className="font-semibold text-[13px] text-gray-900">${s.revenue.toLocaleString()}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-[13px] text-gray-900">{s.name}</p>
                           <p className="text-[10px] text-gray-500">{s.appointments} appts</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="font-semibold text-[13px] text-emerald-600">${(s.todayEarnings || 0).toLocaleString()}</p>
+                          <p className="text-[10px] text-gray-500">today&apos;s earnings</p>
                         </div>
                       </div>
                     ))}

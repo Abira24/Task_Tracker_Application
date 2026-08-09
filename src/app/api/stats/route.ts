@@ -117,6 +117,14 @@ export async function GET(request: NextRequest) {
       topServices: servicesData,
       recentCustomers,
       stylists,
+      stylistEarnings: stylistId
+        ? (await query<any[]>(
+            `SELECT COALESCE(SUM(s.price), 0) as todayEarnings, COUNT(a.id) as todayCompleted
+             FROM Appointment a JOIN Service s ON a.serviceId = s.id
+             WHERE a.stylistId = ? AND DATE(a.date) = CURDATE() AND a.status = 'completed'`,
+            [stylistId]
+          ))[0]
+        : null,
     });
   } catch (error) {
     console.error("Stats error:", error);

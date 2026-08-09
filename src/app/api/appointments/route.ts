@@ -2,17 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 import { requireAdmin } from "@/lib/role-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const stylistId = request.nextUrl.searchParams.get("stylistId");
+
     const appointments = await query<any[]>(
-      `SELECT a.*, c.name as client, c.email as clientEmail, c.phone as clientPhone,
-              s.name as service, s.duration, s.price,
-              st.name as stylist, st.color as stylistColor
-       FROM Appointment a
-       JOIN Customer c ON a.customerId = c.id
-       JOIN Service s ON a.serviceId = s.id
-       JOIN Stylist st ON a.stylistId = st.id
-       ORDER BY a.date DESC, a.startTime`
+      stylistId
+        ? `SELECT a.*, c.name as client, c.email as clientEmail, c.phone as clientPhone,
+                  s.name as service, s.duration, s.price,
+                  st.name as stylist, st.color as stylistColor
+           FROM Appointment a
+           JOIN Customer c ON a.customerId = c.id
+           JOIN Service s ON a.serviceId = s.id
+           JOIN Stylist st ON a.stylistId = st.id
+           WHERE a.stylistId = ?
+           ORDER BY a.date DESC, a.startTime`
+        : `SELECT a.*, c.name as client, c.email as clientEmail, c.phone as clientPhone,
+                  s.name as service, s.duration, s.price,
+                  st.name as stylist, st.color as stylistColor
+           FROM Appointment a
+           JOIN Customer c ON a.customerId = c.id
+           JOIN Service s ON a.serviceId = s.id
+           JOIN Stylist st ON a.stylistId = st.id
+           ORDER BY a.date DESC, a.startTime`,
+      stylistId ? [stylistId] : []
     );
 
     const stylists = await query<any[]>(

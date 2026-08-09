@@ -223,6 +223,7 @@ export default function DashboardPage() {
   const recentCustomers = data?.recentCustomers || [];
 
   const filteredStats = isAdmin ? stats : stats.filter((s: any) => s.title !== "Total Revenue" && s.title !== "Avg. Rating");
+  const stylistEarnings = data?.stylistEarnings;
 
   return (
     <div className="space-y-6">
@@ -275,6 +276,27 @@ export default function DashboardPage() {
           </Card>
         ))}
       </div>
+
+      {!isAdmin && stylistEarnings && (
+        <Card className="border-emerald-200 bg-gradient-to-r from-emerald-50 to-emerald-100/50 shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500 text-white shadow-sm">
+                <DollarSign className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[13px] font-medium text-emerald-700">Today&apos;s Earnings</p>
+                <p className="text-2xl font-bold text-emerald-900">
+                  ${(stylistEarnings.todayEarnings || 0).toLocaleString()}
+                </p>
+                <p className="text-[12px] text-emerald-600 mt-0.5">
+                  {stylistEarnings.todayCompleted || 0} completed appointment{(stylistEarnings.todayCompleted || 0) !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className={`grid grid-cols-1 gap-6 ${isAdmin ? "lg:grid-cols-3" : ""}`}>
         <Card className={`${isAdmin ? "lg:col-span-2" : ""} border-gray-100 shadow-sm`}>
