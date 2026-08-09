@@ -15,6 +15,7 @@ import {
   Star,
   ChevronRight,
   Loader2,
+  CheckSquare,
 } from "lucide-react";
 import {
   Card,
@@ -62,13 +63,17 @@ export default function DashboardPage() {
   const [svcForm, setSvcForm] = useState({ name: "", category: "Cut", duration: "30", price: "" });
 
   const loadData = () => {
-    Promise.all([
-      fetch("/api/stats").then((r) => r.json()),
-      fetch("/api/auth/me").then((r) => r.json()),
-    ])
-      .then(([statsData, userData]) => {
-        setData(statsData);
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((userData) => {
         setUser(userData.user);
+        const params = userData.user?.stylistId
+          ? `?stylistId=${userData.user.stylistId}`
+          : "";
+        return fetch(`/api/stats${params}`).then((r) => r.json());
+      })
+      .then((statsData) => {
+        setData(statsData);
       })
       .catch((e) => {
         console.error(e);
@@ -210,10 +215,14 @@ export default function DashboardPage() {
     return "Good Evening";
   })();
 
+  const isAdmin = user?.role === "admin";
+
   const stats = data?.stats || [];
   const todayAppointments = data?.todayAppointments || [];
   const topServices = data?.topServices || [];
   const recentCustomers = data?.recentCustomers || [];
+
+  const filteredStats = isAdmin ? stats : stats.filter((s: any) => s.title !== "Total Revenue" && s.title !== "Avg. Rating");
 
   return (
     <div className="space-y-6">
@@ -226,17 +235,19 @@ export default function DashboardPage() {
             Here&apos;s what&apos;s happening at your salon today
           </p>
         </div>
-        <Button
-          onClick={openAppointmentDialog}
-          className="bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 rounded-xl font-semibold text-sm px-4 h-10 hidden sm:flex cursor-pointer"
-        >
-          <Calendar className="h-4 w-4" />
-          New Appointment
-        </Button>
+        {isAdmin && (
+          <Button
+            onClick={openAppointmentDialog}
+            className="bg-primary text-white shadow-md shadow-primary/20 hover:bg-primary/90 rounded-xl font-semibold text-sm px-4 h-10 hidden sm:flex cursor-pointer"
+          >
+            <Calendar className="h-4 w-4" />
+            New Appointment
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat: any) => (
+        {filteredStats.map((stat: any) => (
           <Card key={stat.title} className="border-gray-100 shadow-sm">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
@@ -265,8 +276,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 border-gray-100 shadow-sm">
+      <div className={`grid grid-cols-1 gap-6 ${isAdmin ? "lg:grid-cols-3" : ""}`}>
+        <Card className={`${isAdmin ? "lg:col-span-2" : ""} border-gray-100 shadow-sm`}>
           <CardHeader className="flex flex-row items-center justify-between pb-3">
             <CardTitle className="text-[15px] font-bold text-gray-900">
               Today&apos;s Appointments
@@ -313,6 +324,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
+        {isAdmin && (
         <Card className="border-gray-100 shadow-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-[15px] font-bold text-gray-900">Top Services</CardTitle>
@@ -335,6 +347,7 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -382,42 +395,61 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="pt-0">
             <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={openAppointmentDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-primary-50 hover:border-primary-200 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-sm">
-                  <Calendar className="h-5 w-5" />
-                </div>
-                <span className="text-[12px] font-semibold text-gray-700">Book Appointment</span>
-              </button>
-              <button
-                onClick={openCustomerDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-blue-50 hover:border-blue-200 hover:shadow-md hover:shadow-blue/10 transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm">
-                  <Users className="h-5 w-5" />
-                </div>
-                <span className="text-[12px] font-semibold text-gray-700">Add Customer</span>
-              </button>
-              <button
-                onClick={openServiceDialog}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-purple-50 hover:border-purple-200 hover:shadow-md hover:shadow-purple/10 transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-sm">
-                  <Scissors className="h-5 w-5" />
-                </div>
-                <span className="text-[12px] font-semibold text-gray-700">Add Service</span>
-              </button>
-              <button
-                onClick={() => router.push("/analytics")}
-                className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald/10 transition-all duration-200 cursor-pointer"
-              >
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm">
-                  <TrendingUp className="h-5 w-5" />
-                </div>
-                <span className="text-[12px] font-semibold text-gray-700">View Reports</span>
-              </button>
+              {isAdmin && (
+                <button
+                  onClick={openAppointmentDialog}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-primary-50 hover:border-primary-200 hover:shadow-md hover:shadow-primary/10 transition-all duration-200 cursor-pointer"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 text-white shadow-sm">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <span className="text-[12px] font-semibold text-gray-700">Book Appointment</span>
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={openCustomerDialog}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-blue-50 hover:border-blue-200 hover:shadow-md hover:shadow-blue/10 transition-all duration-200 cursor-pointer"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-sm">
+                    <Users className="h-5 w-5" />
+                  </div>
+                  <span className="text-[12px] font-semibold text-gray-700">Add Customer</span>
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={openServiceDialog}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-purple-50 hover:border-purple-200 hover:shadow-md hover:shadow-purple/10 transition-all duration-200 cursor-pointer"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600 text-white shadow-sm">
+                    <Scissors className="h-5 w-5" />
+                  </div>
+                  <span className="text-[12px] font-semibold text-gray-700">Add Service</span>
+                </button>
+              )}
+              {isAdmin && (
+                <button
+                  onClick={() => router.push("/analytics")}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-emerald-50 hover:border-emerald-200 hover:shadow-md hover:shadow-emerald/10 transition-all duration-200 cursor-pointer"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-sm">
+                    <TrendingUp className="h-5 w-5" />
+                  </div>
+                  <span className="text-[12px] font-semibold text-gray-700">View Reports</span>
+                </button>
+              )}
+              {!isAdmin && (
+                <button
+                  onClick={() => router.push("/tasks")}
+                  className="flex flex-col items-center gap-2.5 p-4 rounded-2xl border border-gray-100 hover:bg-amber-50 hover:border-amber-200 hover:shadow-md hover:shadow-amber/10 transition-all duration-200 col-span-2 cursor-pointer"
+                >
+                  <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm">
+                    <CheckSquare className="h-5 w-5" />
+                  </div>
+                  <span className="text-[12px] font-semibold text-gray-700">View My Tasks</span>
+                </button>
+              )}
             </div>
           </CardContent>
         </Card>

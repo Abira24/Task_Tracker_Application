@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireAdmin } from "@/lib/role-guard";
 
 export async function GET() {
   try {
@@ -47,6 +48,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const { name, description, duration, price, category } = body;

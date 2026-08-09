@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AdminGuard } from "@/components/admin-guard";
 import {
   Store,
   Palette,
@@ -235,6 +236,7 @@ export default function SettingsPage() {
   ];
 
   return (
+    <AdminGuard>
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900">Settings</h1>
@@ -645,5 +647,6 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminGuard>
   );
 }

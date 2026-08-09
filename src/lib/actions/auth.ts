@@ -57,6 +57,7 @@ export async function login(state: LoginState, formData: FormData) {
       email: user.email,
       name: user.name,
       role: user.role,
+      stylistId: user.stylistId || null,
     });
   } catch (e) {
     console.error("Login error:", e);
@@ -81,5 +82,6 @@ export async function getCurrentUser() {
     email: session.email,
     name: session.name,
     role: session.role,
+    stylistId: session.stylistId,
   };
 }

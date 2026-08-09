@@ -1,40 +1,77 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const stylistId = request.nextUrl.searchParams.get("stylistId");
+
     const rows = await query<any[]>(
-      "SELECT COALESCE(SUM(s.price), 0) as total FROM Appointment a JOIN Service s ON a.serviceId = s.id WHERE a.status != 'cancelled'"
+      stylistId
+        ? "SELECT COALESCE(SUM(s.price), 0) as total FROM Appointment a JOIN Service s ON a.serviceId = s.id WHERE a.status != 'cancelled' AND a.stylistId = ?"
+        : "SELECT COALESCE(SUM(s.price), 0) as total FROM Appointment a JOIN Service s ON a.serviceId = s.id WHERE a.status != 'cancelled'",
+      stylistId ? [stylistId] : []
     );
     const totalRevenue = rows[0];
 
-    const countRows = await query<any[]>("SELECT COUNT(*) as count FROM Appointment");
+    const countRows = await query<any[]>(
+      stylistId
+        ? "SELECT COUNT(*) as count FROM Appointment WHERE stylistId = ?"
+        : "SELECT COUNT(*) as count FROM Appointment",
+      stylistId ? [stylistId] : []
+    );
     const appointmentsCount = countRows[0];
 
-    const custRows = await query<any[]>("SELECT COUNT(*) as count FROM Customer");
+    const custRows = await query<any[]>(
+      stylistId
+        ? "SELECT COUNT(DISTINCT c.id) as count FROM Customer c JOIN Appointment a ON c.id = a.customerId WHERE a.stylistId = ?"
+        : "SELECT COUNT(*) as count FROM Customer",
+      stylistId ? [stylistId] : []
+    );
     const customersCount = custRows[0];
 
     const servicesData = await query<any[]>(
-      `SELECT s.name, COUNT(a.id) as bookings, CONCAT('$', FORMAT(SUM(s.price), 0)) as revenue
-       FROM Service s LEFT JOIN Appointment a ON s.id = a.serviceId
-       GROUP BY s.id ORDER BY bookings DESC LIMIT 4`
+      stylistId
+        ? `SELECT s.name, COUNT(a.id) as bookings, CONCAT('$', FORMAT(SUM(s.price), 0)) as revenue
+           FROM Service s LEFT JOIN Appointment a ON s.id = a.serviceId AND a.stylistId = ?
+           WHERE a.id IS NOT NULL
+           GROUP BY s.id ORDER BY bookings DESC LIMIT 4`
+        : `SELECT s.name, COUNT(a.id) as bookings, CONCAT('$', FORMAT(SUM(s.price), 0)) as revenue
+           FROM Service s LEFT JOIN Appointment a ON s.id = a.serviceId
+           GROUP BY s.id ORDER BY bookings DESC LIMIT 4`,
+      stylistId ? [stylistId] : []
     );
 
     const recentCustomers = await query<any[]>(
-      `SELECT c.name, COUNT(a.id) as visits, CONCAT('$', FORMAT(COALESCE(SUM(s.price), 0), 0)) as spent,
-              CASE WHEN MAX(a.date) >= CURDATE() THEN 'Today'
-                   WHEN MAX(a.date) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 'Yesterday'
-                   ELSE CONCAT(DATEDIFF(CURDATE(), MAX(a.date)), ' days ago')
-              END as lastVisit
-       FROM Customer c LEFT JOIN Appointment a ON c.id = a.customerId LEFT JOIN Service s ON a.serviceId = s.id
-       GROUP BY c.id ORDER BY MAX(a.date) DESC LIMIT 4`
+      stylistId
+        ? `SELECT c.name, COUNT(a.id) as visits, CONCAT('$', FORMAT(COALESCE(SUM(s.price), 0), 0)) as spent,
+                CASE WHEN MAX(a.date) >= CURDATE() THEN 'Today'
+                     WHEN MAX(a.date) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 'Yesterday'
+                     ELSE CONCAT(DATEDIFF(CURDATE(), MAX(a.date)), ' days ago')
+                END as lastVisit
+           FROM Customer c LEFT JOIN Appointment a ON c.id = a.customerId AND a.stylistId = ? LEFT JOIN Service s ON a.serviceId = s.id
+           WHERE a.id IS NOT NULL
+           GROUP BY c.id ORDER BY MAX(a.date) DESC LIMIT 4`
+        : `SELECT c.name, COUNT(a.id) as visits, CONCAT('$', FORMAT(COALESCE(SUM(s.price), 0), 0)) as spent,
+                CASE WHEN MAX(a.date) >= CURDATE() THEN 'Today'
+                     WHEN MAX(a.date) >= DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 'Yesterday'
+                     ELSE CONCAT(DATEDIFF(CURDATE(), MAX(a.date)), ' days ago')
+                END as lastVisit
+           FROM Customer c LEFT JOIN Appointment a ON c.id = a.customerId LEFT JOIN Service s ON a.serviceId = s.id
+           GROUP BY c.id ORDER BY MAX(a.date) DESC LIMIT 4`,
+      stylistId ? [stylistId] : []
     );
 
     const todayAppointments = await query<any[]>(
-      `SELECT a.id, c.name as client, s.name as service, a.startTime as time, a.endTime, st.name as stylist, a.status,
-              s.duration, CONCAT(FLOOR(s.duration/60), 'h ', s.duration%60, 'm') as durationStr
-       FROM Appointment a JOIN Customer c ON a.customerId = c.id JOIN Service s ON a.serviceId = s.id JOIN Stylist st ON a.stylistId = st.id
-       WHERE DATE(a.date) = CURDATE() ORDER BY a.startTime LIMIT 5`
+      stylistId
+        ? `SELECT a.id, c.name as client, s.name as service, a.startTime as time, a.endTime, st.name as stylist, a.status,
+                  s.duration, CONCAT(FLOOR(s.duration/60), 'h ', s.duration%60, 'm') as durationStr
+           FROM Appointment a JOIN Customer c ON a.customerId = c.id JOIN Service s ON a.serviceId = s.id JOIN Stylist st ON a.stylistId = st.id
+           WHERE DATE(a.date) = CURDATE() AND a.stylistId = ? ORDER BY a.startTime LIMIT 5`
+        : `SELECT a.id, c.name as client, s.name as service, a.startTime as time, a.endTime, st.name as stylist, a.status,
+                  s.duration, CONCAT(FLOOR(s.duration/60), 'h ', s.duration%60, 'm') as durationStr
+           FROM Appointment a JOIN Customer c ON a.customerId = c.id JOIN Service s ON a.serviceId = s.id JOIN Stylist st ON a.stylistId = st.id
+           WHERE DATE(a.date) = CURDATE() ORDER BY a.startTime LIMIT 5`,
+      stylistId ? [stylistId] : []
     );
 
     const stylists = await query<any[]>(

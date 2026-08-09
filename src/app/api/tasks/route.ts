@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireAdmin } from "@/lib/role-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const stylistId = request.nextUrl.searchParams.get("stylistId");
+
     const tasks = await query<any[]>(
-      `SELECT t.*, u.name as assignee, u.id as userId, st.name as stylistName, st.id as stylistId, st.color as stylistColor
-       FROM Task t LEFT JOIN User u ON t.userId = u.id LEFT JOIN Stylist st ON t.stylistId = st.id
-       ORDER BY FIELD(t.status, 'todo', 'in-progress', 'review', 'done'), t.createdAt DESC`
+      stylistId
+        ? `SELECT t.*, u.name as assignee, u.id as userId, st.name as stylistName, st.id as stylistId, st.color as stylistColor
+           FROM Task t LEFT JOIN User u ON t.userId = u.id LEFT JOIN Stylist st ON t.stylistId = st.id
+           WHERE t.stylistId = ?
+           ORDER BY FIELD(t.status, 'todo', 'in-progress', 'review', 'done'), t.createdAt DESC`
+        : `SELECT t.*, u.name as assignee, u.id as userId, st.name as stylistName, st.id as stylistId, st.color as stylistColor
+           FROM Task t LEFT JOIN User u ON t.userId = u.id LEFT JOIN Stylist st ON t.stylistId = st.id
+           ORDER BY FIELD(t.status, 'todo', 'in-progress', 'review', 'done'), t.createdAt DESC`,
+      stylistId ? [stylistId] : []
     );
 
     const mapped = tasks.map((t: any) => {
@@ -49,6 +58,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const { title, description, priority, status, dueDate, tags, userId, stylistId } = body;

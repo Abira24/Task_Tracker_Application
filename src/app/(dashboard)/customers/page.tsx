@@ -57,6 +57,7 @@ function CustomersContent() {
   const [searchTerm, setSearchTerm] = useState(urlSearch);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -67,8 +68,15 @@ function CustomersContent() {
   const [editForm, setEditForm] = useState({ name: "", email: "", phone: "", notes: "" });
 
   const loadCustomers = () => {
-    fetch("/api/customers")
+    fetch("/api/auth/me")
       .then((r) => r.json())
+      .then((userData) => {
+        setUserRole(userData.user?.role || null);
+        const params = userData.user?.stylistId
+          ? `?stylistId=${userData.user.stylistId}`
+          : "";
+        return fetch(`/api/customers${params}`).then((r) => r.json());
+      })
       .then((data) => {
         setCustomers(data.customers || []);
         setStats(data.stats || {});
@@ -76,6 +84,8 @@ function CustomersContent() {
       .catch(console.error)
       .finally(() => setLoading(false));
   };
+
+  const isAdmin = userRole === "admin";
 
   useEffect(loadCustomers, []);
 
@@ -158,31 +168,35 @@ function CustomersContent() {
           <p className="text-gray-500">Manage your customer database and relationships</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
-            const data = customers.map((c) => ({
-              Name: c.name,
-              Email: c.email,
-              Phone: c.phone || "",
-              Status: c.status,
-              Visits: c.visits,
-              "Total Spent": c.totalSpent,
-              "Last Visit": c.lastVisit,
-            }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            ws["!cols"] = [
-              { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 14 },
-            ];
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Customers");
-            const now = new Date();
-            const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
-            XLSX.writeFile(wb, `customers-export-${dateStr}.xlsx`);
-          }}>
-            <FileSpreadsheet className="h-4 w-4" /> Export Excel
-          </Button>
-          <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
-            <UserPlus className="h-4 w-4" /> Add Customer
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" size="sm" className="rounded-xl border-gray-200 text-gray-700 hover:bg-gray-50 cursor-pointer" onClick={() => {
+              const data = customers.map((c) => ({
+                Name: c.name,
+                Email: c.email,
+                Phone: c.phone || "",
+                Status: c.status,
+                Visits: c.visits,
+                "Total Spent": c.totalSpent,
+                "Last Visit": c.lastVisit,
+              }));
+              const ws = XLSX.utils.json_to_sheet(data);
+              ws["!cols"] = [
+                { wch: 22 }, { wch: 28 }, { wch: 16 }, { wch: 12 }, { wch: 8 }, { wch: 12 }, { wch: 14 },
+              ];
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Customers");
+              const now = new Date();
+              const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+              XLSX.writeFile(wb, `customers-export-${dateStr}.xlsx`);
+            }}>
+              <FileSpreadsheet className="h-4 w-4" /> Export Excel
+            </Button>
+          )}
+          {isAdmin && (
+            <Button onClick={() => { setCreateForm({ name: "", email: "", phone: "", notes: "" }); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer">
+              <UserPlus className="h-4 w-4" /> Add Customer
+            </Button>
+          )}
         </div>
       </div>
 

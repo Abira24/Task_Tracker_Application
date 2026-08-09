@@ -6,6 +6,7 @@ export type SessionPayload = {
   email: string;
   name: string;
   role: string;
+  stylistId: string | null;
   expiresAt: Date;
 };
 
@@ -37,6 +38,7 @@ export async function createSession(user: {
   email: string;
   name: string;
   role: string;
+  stylistId?: string | null;
 }) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   const session = await encrypt({
@@ -44,6 +46,7 @@ export async function createSession(user: {
     email: user.email,
     name: user.name,
     role: user.role,
+    stylistId: user.stylistId ?? null,
     expiresAt,
   });
 

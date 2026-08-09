@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       role: user.role,
+      stylistId: user.stylistId || null,
     });
 
     return NextResponse.json({

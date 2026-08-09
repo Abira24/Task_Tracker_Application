@@ -107,15 +107,21 @@ function TasksContent() {
   const [editForm, setEditForm] = useState(emptyForm);
 
   const loadData = () => {
-    Promise.all([
-      fetch("/api/tasks").then((r) => r.json()),
-      fetch("/api/stylists").then((r) => r.json()),
-      fetch("/api/auth/me").then((r) => r.json()),
-    ])
-      .then(([taskData, stylistData, userData]) => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((userData) => {
+        setUserRole(userData.user?.role || "");
+        const params = userData.user?.stylistId
+          ? `?stylistId=${userData.user.stylistId}`
+          : "";
+        return Promise.all([
+          fetch(`/api/tasks${params}`).then((r) => r.json()),
+          fetch("/api/stylists").then((r) => r.json()),
+        ]);
+      })
+      .then(([taskData, stylistData]) => {
         setTasks(taskData.tasks || []);
         setStylists(stylistData.stylists || []);
-        setUserRole(userData.user?.role || "");
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -302,9 +308,11 @@ function TasksContent() {
               <LayoutList className="h-3.5 w-3.5" /> List
             </button>
           </div>
-          <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20 h-9 px-4 text-[13px] font-medium">
-            <Plus className="h-4 w-4" /> New Task
-          </Button>
+          {isAdmin && (
+            <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} className="bg-primary hover:bg-primary/90 text-white rounded-xl cursor-pointer shadow-sm shadow-primary/20 h-9 px-4 text-[13px] font-medium">
+              <Plus className="h-4 w-4" /> New Task
+            </Button>
+          )}
         </div>
       </div>
 
@@ -508,9 +516,11 @@ function TasksContent() {
               <CardContent className="py-16 text-center">
                 <ListTodo className="h-10 w-10 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-400 text-[13px] font-medium">No tasks found</p>
-                <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} variant="ghost" size="sm" className="mt-2 text-primary hover:text-primary/80 cursor-pointer">
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Create one
-                </Button>
+                {isAdmin && (
+                  <Button onClick={() => { setCreateForm(emptyForm); setShowCreateDialog(true); }} variant="ghost" size="sm" className="mt-2 text-primary hover:text-primary/80 cursor-pointer">
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Create one
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
@@ -575,13 +585,15 @@ function TasksContent() {
                             {c.title}
                           </button>
                         ))}
-                        <button
-                          onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
-                          className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors cursor-pointer"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                            className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 transition-colors cursor-pointer"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
@@ -786,13 +798,15 @@ function TasksContent() {
             </div>
           )}
           <DialogFooter className="gap-2 border-t border-gray-100 pt-4">
-            <Button
-              variant="outline"
-              onClick={() => deleteTask(selectedTask?.id || "")}
-              className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer"
-            >
-              <Trash2 className="h-4 w-4" /> Delete
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="outline"
+                onClick={() => deleteTask(selectedTask?.id || "")}
+                className="rounded-xl text-red-500 border-red-200 hover:bg-red-50 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" /> Delete
+              </Button>
+            )}
             <Button
               onClick={updateTask}
               disabled={formSubmitting}

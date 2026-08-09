@@ -1,19 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireAdmin } from "@/lib/role-guard";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const stylistId = request.nextUrl.searchParams.get("stylistId");
+
     const customers = await query<any[]>(
-      `SELECT c.*,
-              COUNT(a.id) as visits,
-              COALESCE(SUM(s.price), 0) as totalSpent,
-              MAX(a.date) as lastVisitDate,
-              (SELECT s2.name FROM Appointment a2 JOIN Service s2 ON a2.serviceId = s2.id WHERE a2.customerId = c.id GROUP BY s2.id ORDER BY COUNT(a2.id) DESC LIMIT 1) as favoriteService
-       FROM Customer c
-       LEFT JOIN Appointment a ON c.id = a.customerId
-       LEFT JOIN Service s ON a.serviceId = s.id
-       GROUP BY c.id
-       ORDER BY c.createdAt DESC`
+      stylistId
+        ? `SELECT c.*,
+                  COUNT(a.id) as visits,
+                  COALESCE(SUM(s.price), 0) as totalSpent,
+                  MAX(a.date) as lastVisitDate,
+                  (SELECT s2.name FROM Appointment a2 JOIN Service s2 ON a2.serviceId = s2.id WHERE a2.customerId = c.id AND a2.stylistId = ? GROUP BY s2.id ORDER BY COUNT(a2.id) DESC LIMIT 1) as favoriteService
+           FROM Customer c
+           INNER JOIN Appointment a ON c.id = a.customerId AND a.stylistId = ?
+           LEFT JOIN Service s ON a.serviceId = s.id
+           GROUP BY c.id
+           ORDER BY MAX(a.date) DESC`
+        : `SELECT c.*,
+                  COUNT(a.id) as visits,
+                  COALESCE(SUM(s.price), 0) as totalSpent,
+                  MAX(a.date) as lastVisitDate,
+                  (SELECT s2.name FROM Appointment a2 JOIN Service s2 ON a2.serviceId = s2.id WHERE a2.customerId = c.id GROUP BY s2.id ORDER BY COUNT(a2.id) DESC LIMIT 1) as favoriteService
+           FROM Customer c
+           LEFT JOIN Appointment a ON c.id = a.customerId
+           LEFT JOIN Service s ON a.serviceId = s.id
+           GROUP BY c.id
+           ORDER BY c.createdAt DESC`,
+      stylistId ? [stylistId, stylistId] : []
     );
 
     const mapped = customers.map((c: any) => ({
@@ -52,6 +67,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
   try {
     const body = await request.json();
     const { name, email, phone, notes } = body;

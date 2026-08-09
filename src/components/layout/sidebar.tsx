@@ -23,15 +23,15 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const navItems = [
-  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Appointments", href: "/appointments", icon: Calendar },
-  { title: "Customers", href: "/customers", icon: Users },
-  { title: "Services", href: "/services", icon: Scissors },
-  { title: "Tasks", href: "/tasks", icon: CheckSquare },
-  { title: "Inventory", href: "/inventory", icon: Package },
-  { title: "Reports", href: "/analytics", icon: BarChart3 },
-  { title: "Settings", href: "/settings", icon: Settings },
+const allNavItems = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard, adminOnly: false },
+  { title: "Appointments", href: "/appointments", icon: Calendar, adminOnly: false },
+  { title: "Customers", href: "/customers", icon: Users, adminOnly: false },
+  { title: "Services", href: "/services", icon: Scissors, adminOnly: true },
+  { title: "Tasks", href: "/tasks", icon: CheckSquare, adminOnly: false },
+  { title: "Inventory", href: "/inventory", icon: Package, adminOnly: true },
+  { title: "Reports", href: "/analytics", icon: BarChart3, adminOnly: true },
+  { title: "Settings", href: "/settings", icon: Settings, adminOnly: true },
 ];
 
 export function Sidebar() {
@@ -107,26 +107,28 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-2.5 py-3 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const active = isActive(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
-                active
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-              )}
-              title={collapsed ? item.title : undefined}
-            >
-              <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "")} />
-              {!collapsed && <span className="flex-1">{item.title}</span>}
-            </Link>
-          );
-        })}
+        {allNavItems
+          .filter((item) => !item.adminOnly || user?.role === "admin")
+          .map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all duration-150",
+                  active
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                )}
+                title={collapsed ? item.title : undefined}
+              >
+                <item.icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "")} />
+                {!collapsed && <span className="flex-1">{item.title}</span>}
+              </Link>
+            );
+          })}
       </nav>
 
       {/* User */}

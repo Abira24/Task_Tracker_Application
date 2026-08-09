@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/db";
+import { requireAdmin } from "@/lib/role-guard";
 
 function todayStr() {
   const d = new Date();
@@ -7,6 +8,8 @@ function todayStr() {
 }
 
 export async function GET() {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
   try {
     const today = todayStr();
 

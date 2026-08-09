@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, getSingle } from "@/lib/db";
+import { requireAdmin } from "@/lib/role-guard";
 
 export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,6 +41,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const auth = await requireAdmin();
+  if (auth.error) return auth.error;
   const { id } = await params;
   try {
     await query("DELETE FROM Appointment WHERE id = ?", [id]);

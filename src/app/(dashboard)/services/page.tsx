@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { AdminGuard } from "@/components/admin-guard";
 import {
   Plus,
   Search,
@@ -424,8 +425,10 @@ function ServicesContent() {
 
 export default function ServicesPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
-      <ServicesContent />
-    </Suspense>
+    <AdminGuard>
+      <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+        <ServicesContent />
+      </Suspense>
+    </AdminGuard>
   );
 }

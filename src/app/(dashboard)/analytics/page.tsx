@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AdminGuard } from "@/components/admin-guard";
 import {
   DollarSign,
   Calendar,
@@ -116,6 +117,7 @@ export default function ReportsPage() {
   const topStylists = data?.topStylists || [];
 
   return (
+    <AdminGuard>
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -408,5 +410,6 @@ export default function ReportsPage() {
         </Card>
       </div>
     </div>
+    </AdminGuard>
   );
 }
