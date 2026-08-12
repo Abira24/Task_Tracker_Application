@@ -18,24 +18,43 @@ jobs:
       security-events: write
 
     steps:
+      # --------------------------------------------------
+      # Checkout
+      # --------------------------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # --------------------------------------------------
+      # Set lowercase image name
+      # --------------------------------------------------
       - name: Set image name to lowercase
         run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
 
+      # --------------------------------------------------
+      # Docker Buildx
+      # --------------------------------------------------
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # --------------------------------------------------
+      # Build Docker image
+      # --------------------------------------------------
       - name: Build Docker image
         run: |
-          docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
 
+      # --------------------------------------------------
+      # List Docker images
+      # --------------------------------------------------
       - name: List Docker images
         run: docker images
 
+      # --------------------------------------------------
+      # Trivy Docker Image Scan
+      # --------------------------------------------------
       - name: Run Trivy scan
-        uses: aquasecurity/trivy-action@v0.24.0
+        uses: aquasecurity/trivy-action@0.24.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           format: sarif
@@ -43,17 +62,106 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "0"
 
+      # --------------------------------------------------
+      # Verify Trivy report
+      # --------------------------------------------------
       - name: Verify SARIF file
         run: |
           ls -lah
           test -f trivy-results.sarif
 
+      # --------------------------------------------------
+      # Upload Trivy results to GitHub Security
+      # --------------------------------------------------
       - name: Upload Trivy results
         if: always()
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif
 
+      # --------------------------------------------------
+      # Start application container
+      # --------------------------------------------------
+      - name: Run Docker container
+        run: |
+          docker run -d \
+            --name app \
+            -p 3000:3000 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # --------------------------------------------------
+      # Show container logs
+      # --------------------------------------------------
+      - name: Show container status
+        run: |
+          docker ps
+          docker logs app
+
+      # --------------------------------------------------
+      # Wait for application
+      # --------------------------------------------------
+      - name: Wait for application
+        run: |
+          echo "Waiting for application to start..."
+
+          for i in {1..30}; do
+            if curl -f http://localhost:3000; then
+              echo "Application is ready!"
+              exit 0
+            fi
+
+            echo "Attempt $i: Application not ready yet..."
+            sleep 5
+          done
+
+          echo "Application failed to start"
+          docker logs app
+          exit 1
+
+      # --------------------------------------------------
+      # OWASP ZAP Baseline Scan
+      # --------------------------------------------------
+      - name: OWASP ZAP Scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: "http://localhost:3000"
+          allow_issue_writing: false
+          fail_action: false
+
+      # --------------------------------------------------
+      # Upload OWASP ZAP reports
+      # --------------------------------------------------
+      - name: Upload OWASP ZAP reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-zap-report
+          path: |
+            report_html.html
+            report_md.md
+            report_json.json
+          retention-days: 30
+
+      # --------------------------------------------------
+      # Show Docker logs if something fails
+      # --------------------------------------------------
+      - name: Docker logs
+        if: failure()
+        run: |
+          docker logs app
+
+      # --------------------------------------------------
+      # Stop container
+      # --------------------------------------------------
+      - name: Stop Docker container
+        if: always()
+        run: |
+          docker stop app || true
+          docker rm app || true
+
+      # --------------------------------------------------
+      # Login to GitHub Container Registry
+      # --------------------------------------------------
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -61,6 +169,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # --------------------------------------------------
+      # Push Docker image
+      # --------------------------------------------------
       - name: Push Docker image
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker push \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
